@@ -120,11 +120,11 @@ export function DialogEditor() {
             <span className="spacer" />
             <button onClick={() => setResponses(responses.filter((_, j) => j !== i))}>remover</button>
           </div>
-          <label>match (palavras-chave, separadas por vírgula)</label>
+          <label>match (palavras ou frases, separadas por vírgula)</label>
           <input
             type="text"
             value={(r.match ?? []).join(', ')}
-            placeholder="nostromo, nave, cargueiro"
+            placeholder="nostromo, o que houve, autodestruição da nave"
             // Don't filter empties WHILE typing — that would eat a freshly typed
             // comma (and block a second keyword). Trim per segment so the join
             // reproduces the text; drop empty segments only on blur.
@@ -133,6 +133,10 @@ export function DialogEditor() {
             }
             onBlur={() => patchResponse(i, { match: (r.match ?? []).filter(Boolean) })}
           />
+          <div className="help">
+            Casa quando a query do jogador <strong>contém</strong> o item (substring, ignora
+            maiúsculas). Cada item pode ser palavra ou frase; a vírgula separa alternativas.
+          </div>
           <label>lines (resposta, uma linha por row)</label>
           <textarea
             rows={3}

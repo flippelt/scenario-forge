@@ -358,6 +358,15 @@ details.advanced > summary {
   color: var(--fg-dim);
   margin: 0.4rem 0 0.15rem;
 }
+.response-card .help {
+  font-size: 0.72rem;
+  color: var(--fg-dim);
+  margin-top: 0.2rem;
+  line-height: 1.4;
+}
+.response-card .help strong {
+  color: var(--fg);
+}
 .dialog-remove {
   margin-top: 0.3rem;
   color: var(--err);
