@@ -7,7 +7,9 @@
 import { describe, it, expect } from 'vitest'
 import {
   parseFrontMatter as enginePFM,
-  composeCustomScenario
+  composeCustomScenario,
+  runCommand,
+  makeT
 } from 'rpgterm-engine'
 import { parseFrontMatter as editorPFM, serializeFrontMatter } from './frontmatter'
 import { toRuntimeBundle } from './serialize'
@@ -69,5 +71,32 @@ describe('schema parity with the real engine', () => {
       filesystem: Record<string, Record<string, unknown>>
     }
     expect(theme.filesystem['/case.md'].content).toBe('# Caso')
+  })
+
+  it('a dialog edited in the editor drives the engine `query` command', () => {
+    const p: Project = {
+      theme: 'alien',
+      meta: {
+        id: 'muthur',
+        dialog: {
+          fallback: 'REGISTRO NÃO ENCONTRADO.',
+          responses: [{ match: ['nostromo', 'nave'], lines: ['Cargueiro classe M, registro 180924609.'] }]
+        }
+      },
+      files: [],
+      translations: {},
+      dirPath: null
+    }
+    const theme = composeCustomScenario(toRuntimeBundle(p) as Record<string, unknown>) as {
+      filesystem?: Record<string, unknown>
+    }
+    const out = runCommand('query nostromo', {
+      theme,
+      fs: theme.filesystem ?? {},
+      cwd: '/',
+      unlocked: new Set(),
+      t: makeT('en')
+    }) as { text?: string }[]
+    expect(out.some((l) => (l.text ?? '').includes('Cargueiro classe M'))).toBe(true)
   })
 })
