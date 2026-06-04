@@ -120,22 +120,23 @@ export function DialogEditor() {
             <span className="spacer" />
             <button onClick={() => setResponses(responses.filter((_, j) => j !== i))}>remover</button>
           </div>
-          <label>match (palavras ou frases, separadas por vírgula)</label>
+          <label>match (palavras ou frases, separadas por ;)</label>
           <input
             type="text"
-            value={(r.match ?? []).join(', ')}
-            placeholder="nostromo, o que houve, autodestruição da nave"
-            // Don't filter empties WHILE typing — that would eat a freshly typed
-            // comma (and block a second keyword). Trim per segment so the join
-            // reproduces the text; drop empty segments only on blur.
+            value={(r.match ?? []).join('; ')}
+            placeholder="nostromo; o que houve, exatamente?; autodestruição da nave"
+            // `;` separates alternatives so a phrase can itself contain commas.
+            // Don't filter empties WHILE typing (that would eat a freshly typed
+            // separator); trim per segment, drop empty segments on blur.
             onChange={(e) =>
-              patchResponse(i, { match: e.target.value.split(',').map((s) => s.trim()) })
+              patchResponse(i, { match: e.target.value.split(';').map((s) => s.trim()) })
             }
             onBlur={() => patchResponse(i, { match: (r.match ?? []).filter(Boolean) })}
           />
           <div className="help">
             Casa quando a query do jogador <strong>contém</strong> o item (substring, ignora
-            maiúsculas). Cada item pode ser palavra ou frase; a vírgula separa alternativas.
+            maiúsculas). Cada item pode ser palavra ou frase; o <strong>;</strong> separa
+            alternativas — assim a frase pode ter vírgula.
           </div>
           <label>lines (resposta, uma linha por row)</label>
           <textarea
