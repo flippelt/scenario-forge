@@ -11,10 +11,12 @@ import { promptText, confirmDialog, alertDialog } from '../ui/dialog'
 
 export function Toolbar({
   onShowScenario,
-  onPreview
+  onPreview,
+  onTemplates
 }: {
   onShowScenario: () => void
   onPreview: () => void
+  onTemplates: () => void
 }) {
   const project = useStore((s) => s.project)
   const dirty = useStore((s) => s.dirty)
@@ -68,6 +70,11 @@ export function Toolbar({
       newProject()
   }
 
+  const handleTemplates = async () => {
+    if (!dirty || (await confirmDialog({ title: 'Novo de template', message: 'Descartar alterações não salvas?', okLabel: 'Descartar' })))
+      onTemplates()
+  }
+
   const handleAddLang = async () => {
     const code = await promptText({
       title: 'Novo idioma',
@@ -83,6 +90,7 @@ export function Toolbar({
       <span className="brand">▒ scenario-forge</span>
 
       <button onClick={handleNew}>Novo</button>
+      <button onClick={handleTemplates}>Templates</button>
       <button onClick={handleOpen} disabled={!tauri} title={tauri ? '' : 'Requer o app desktop'}>
         Abrir pasta
       </button>
