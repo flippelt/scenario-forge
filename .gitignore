@@ -7,6 +7,8 @@ dist-ssr/
 
 # Tauri / Rust
 src-tauri/target/
+# Generated at build time by tauri-build (regenerated on every build).
+src-tauri/gen/
 
 # OS / editor
 .DS_Store

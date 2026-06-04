@@ -1,6 +1,7 @@
 import { useStore } from '../model/store'
 import { buildTree, type TreeNode } from '../model/vfs'
 import type { FileNode } from '../model/types'
+import { promptText, confirmDialog } from '../ui/dialog'
 
 function Row({
   node,
@@ -64,10 +65,23 @@ export function FileTree({
   const tree = buildTree(files)
   const metaByPath = new Map(files.map((f) => [f.path, f]))
 
-  const promptNew = (locked: boolean) => {
-    const p = window.prompt(
-      locked ? 'Caminho do novo arquivo bloqueado (ex.: /intel/safe.dat)' : 'Caminho do novo arquivo (ex.: /case.md)'
-    )
+  const exists = (path: string) => files.some((f) => f.path === path)
+
+  const promptNew = async (locked: boolean) => {
+    const p = await promptText({
+      title: locked ? 'Novo arquivo bloqueado' : 'Novo arquivo',
+      message: locked
+        ? 'Caminho do novo arquivo .dat (ex.: /intel/safe.dat)'
+        : 'Caminho do novo arquivo (ex.: /case.md)',
+      placeholder: locked ? '/intel/safe.dat' : '/case.md',
+      validate: (v) => {
+        const t = v.trim()
+        if (!t) return 'Informe um caminho.'
+        const norm = t.startsWith('/') ? t : '/' + t
+        if (exists(norm)) return 'Já existe um arquivo nesse caminho.'
+        return null
+      }
+    })
     if (p && p.trim()) addFile(p.trim(), locked)
   }
 
@@ -88,16 +102,28 @@ export function FileTree({
       {selectedPath && (
         <div className="tree-actions">
           <button
-            onClick={() => {
-              const np = window.prompt('Novo caminho', selectedPath)
+            onClick={async () => {
+              const np = await promptText({
+                title: 'Renomear arquivo',
+                message: 'Novo caminho',
+                defaultValue: selectedPath,
+                validate: (v) => {
+                  const t = v.trim()
+                  if (!t) return 'Informe um caminho.'
+                  const norm = t.startsWith('/') ? t : '/' + t
+                  if (norm !== selectedPath && exists(norm)) return 'Já existe um arquivo nesse caminho.'
+                  return null
+                }
+              })
               if (np && np.trim()) renameFile(selectedPath, np.trim())
             }}
           >
             renomear
           </button>
           <button
-            onClick={() => {
-              if (window.confirm(`Excluir ${selectedPath}?`)) deleteFile(selectedPath)
+            onClick={async () => {
+              if (await confirmDialog({ title: 'Excluir arquivo', message: `Excluir ${selectedPath}?`, okLabel: 'Excluir' }))
+                deleteFile(selectedPath)
             }}
           >
             excluir

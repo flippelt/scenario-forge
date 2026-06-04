@@ -5,6 +5,7 @@ import { FileEditor } from './editor/FileEditor'
 import { FlagsPanel } from './editor/FlagsPanel'
 import { ScenarioPanel } from './editor/ScenarioPanel'
 import { ValidationPanel } from './editor/ValidationPanel'
+import { Dialogs } from './ui/Dialogs'
 
 type View = 'file' | 'scenario'
 
@@ -23,6 +24,7 @@ export function App() {
         <FlagsPanel />
       </div>
       <ValidationPanel />
+      <Dialogs />
     </div>
   )
 }
