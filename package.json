@@ -21,6 +21,7 @@
     "@tauri-apps/plugin-fs": "^2.2.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "rpgterm-engine": "github:flippelt/rpgterm-engine",
     "zustand": "^5.0.2"
   },
   "devDependencies": {
