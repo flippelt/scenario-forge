@@ -6,16 +6,17 @@ monta a árvore de `.md`/`.dat`, configura os flags de jogo
 (crackable, tracer, locked, dificuldade…) por formulário e exporta a pasta
 versionável **e** o JSON carregável em runtime.
 
-> **Status:** Fase 1 em desenvolvimento — modelo de dados, editor de árvore,
-> editor de arquivos, painel de flags, editor do `scenario.json`, validação e
-> export já funcionam. Preview ao vivo (Fase 2) ainda não. Veja
+> **Status:** Fases 1 e 2 prontas — editor de árvore, editor md/dat, painel de
+> flags, `scenario.json`, validação, export/import e **preview ao vivo** já
+> funcionam. Próxima: Fase 3 (templates, import avançado, polish). Veja
 > [PLANNING.md](./PLANNING.md).
 
 ## Stack
 - **Tauri 2** (Rust) + **React + Vite + TypeScript**
-- Modelo de dados fiel ao engine do terminal (`commands.js` / `themes/index.js`),
-  com testes de round-trip garantindo que os flags gerados são exatamente os que
-  o terminal lê.
+- Modelo de dados fiel ao engine do terminal, consumido do pacote
+  [`rpgterm-engine`](https://www.npmjs.com/package/rpgterm-engine) (npm), com
+  teste de paridade garantindo que os flags gerados são exatamente os que o
+  terminal lê.
 
 ## Desenvolvimento
 
@@ -52,8 +53,15 @@ npm run build
   de abrir, flag no arquivo errado, tradução órfã…).
 - **Export**: pasta `scenario.json + files/ + files.<lang>/` (desktop) e bundle
   JSON único (desktop e web). **Import** do bundle.
+- **▶ Preview ao vivo**: embute o terminal real (publicado) e carrega o cenário
+  atual via `?scenario64=` — crackar/decifrar/tracer dentro do editor.
+
+## Distribuição
+`npm run tauri build` gera os instaladores em `src-tauri/target/release/bundle/`
+(`.msi`/`.exe`, `.dmg`, `.AppImage`/`.deb`). O workflow de release publica uma
+GitHub Release com os 3 OS ao empurrar uma tag `v*`. Builds não-assinados por
+ora — veja [SIGNING.md](./SIGNING.md).
 
 ## Próximos passos
 Roadmap em fases no [PLANNING.md](./PLANNING.md#8-roadmap-em-fases).
-Fase 2 = preview ao vivo com o engine real embutido (depende de extrair o
-pacote `rpgterm-engine`).
+Fase 3 = templates por sistema, import de pasta avançado e polish.
