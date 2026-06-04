@@ -8,6 +8,10 @@ import type { Dialog, DialogResponse, ScenarioMeta } from '../model/types'
 
 const RESPONSE_TYPES = ['', 'normal', 'muted', 'ok', 'err']
 
+// Stable reference for "no dialog yet". Returning a fresh `{}` from the store
+// selector would change identity every render → useSyncExternalStore loops.
+const EMPTY_DIALOG: Dialog = {}
+
 // textarea text <-> the engine's string | string[] (single line stays a string).
 const toText = (v?: string | string[]) => (Array.isArray(v) ? v.join('\n') : (v ?? ''))
 function fromText(t: string): string | string[] | undefined {
@@ -18,7 +22,8 @@ function fromText(t: string): string | string[] | undefined {
 }
 
 export function DialogEditor() {
-  const dialog = useStore((s) => (s.project.meta.dialog ?? {}) as Dialog)
+  // Select the raw stored value (stable ref) and default OUTSIDE the selector.
+  const dialog = (useStore((s) => s.project.meta.dialog) ?? EMPTY_DIALOG) as Dialog
   const meta = useStore((s) => s.project.meta)
   const setMeta = useStore((s) => s.setMeta)
   const replaceMeta = useStore((s) => s.replaceMeta)

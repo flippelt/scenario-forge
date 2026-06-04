@@ -19,3 +19,4 @@ Thumbs.db
 
 # Local build log
 tauri-build.log
+tauri-dev.log
