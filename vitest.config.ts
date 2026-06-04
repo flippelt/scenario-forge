@@ -6,6 +6,10 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   test: {
     environment: 'jsdom',
-    globals: true
+    globals: true,
+    // rpgterm-engine ships untranspiled ESM source (bare .json imports). Vitest
+    // skips node_modules by default; inline it so Vite transforms it like our
+    // own code (handling the JSON imports without import attributes).
+    server: { deps: { inline: [/rpgterm-engine/] } }
   }
 })

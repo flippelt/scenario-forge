@@ -9,7 +9,13 @@ import {
 } from '../fs/adapter'
 import { promptText, confirmDialog, alertDialog } from '../ui/dialog'
 
-export function Toolbar({ onShowScenario }: { onShowScenario: () => void }) {
+export function Toolbar({
+  onShowScenario,
+  onPreview
+}: {
+  onShowScenario: () => void
+  onPreview: () => void
+}) {
   const project = useStore((s) => s.project)
   const dirty = useStore((s) => s.dirty)
   const lang = useStore((s) => s.lang)
@@ -88,6 +94,10 @@ export function Toolbar({ onShowScenario }: { onShowScenario: () => void }) {
 
       <button onClick={() => exportRuntimeBundle(project)}>Exportar bundle</button>
       <button onClick={() => fileInput.current?.click()}>Importar bundle</button>
+
+      <span className="sep" />
+
+      <button className="primary" onClick={onPreview}>▶ Preview</button>
       <input
         ref={fileInput}
         type="file"
