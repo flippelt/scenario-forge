@@ -9,9 +9,11 @@ import {
   parseFrontMatter as enginePFM,
   composeCustomScenario,
   runCommand,
-  makeT
+  makeT,
+  encodeBundle
 } from 'rpgterm-engine'
 import { parseFrontMatter as editorPFM, serializeFrontMatter } from './frontmatter'
+import { importShareLink } from '../fs/adapter'
 import { toRuntimeBundle } from './serialize'
 import type { Project } from './types'
 
@@ -98,5 +100,15 @@ describe('schema parity with the real engine', () => {
       t: makeT('en')
     }) as { text?: string }[]
     expect(out.some((l) => (l.text ?? '').includes('Cargueiro classe M'))).toBe(true)
+  })
+
+  it('importShareLink decodifica um ?scenario64= de volta ao projeto', () => {
+    const token = encodeBundle(toRuntimeBundle(sample))
+    const back = importShareLink(`https://exemplo/?scenario64=${token}&x=1`)
+    expect(back.theme).toBe(sample.theme)
+    expect(back.files).toEqual(sample.files)
+    expect(back.translations).toEqual(sample.translations)
+    // também aceita o token cru, sem URL
+    expect(importShareLink(token).meta.id).toBe(sample.meta.id)
   })
 })

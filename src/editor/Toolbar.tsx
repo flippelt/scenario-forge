@@ -5,7 +5,8 @@ import {
   openScenarioFolder,
   saveScenarioFolder,
   exportRuntimeBundle,
-  importRuntimeBundleText
+  importRuntimeBundleText,
+  importShareLink
 } from '../fs/adapter'
 import { promptText, confirmDialog, alertDialog } from '../ui/dialog'
 
@@ -65,6 +66,23 @@ export function Toolbar({
     reader.readAsText(file)
   }
 
+  const handleImportLink = async () => {
+    if (dirty && !(await confirmDialog({ title: 'Importar link', message: 'Descartar alterações não salvas?', okLabel: 'Descartar' })))
+      return
+    const input = await promptText({
+      title: 'Importar de link',
+      message: 'Cole o link de compartilhamento (…?scenario64=…) ou o token',
+      placeholder: 'https://…/?scenario64=eyJ0aGVtZ…'
+    })
+    if (!input || !input.trim()) return
+    try {
+      loadProject(importShareLink(input))
+      onShowScenario()
+    } catch (e) {
+      alertDialog({ title: 'Link inválido', message: e instanceof Error ? e.message : String(e) })
+    }
+  }
+
   const handleNew = async () => {
     if (!dirty || (await confirmDialog({ title: 'Novo cenário', message: 'Descartar alterações não salvas?', okLabel: 'Descartar' })))
       newProject()
@@ -102,6 +120,7 @@ export function Toolbar({
 
       <button onClick={() => exportRuntimeBundle(project)}>Exportar bundle</button>
       <button onClick={() => fileInput.current?.click()}>Importar bundle</button>
+      <button onClick={handleImportLink}>Importar link</button>
 
       <span className="sep" />
 
