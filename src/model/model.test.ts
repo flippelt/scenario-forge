@@ -160,3 +160,27 @@ describe('validation', () => {
     expect(errors).toHaveLength(0)
   })
 })
+
+describe('events round-trip (editor de eventos)', () => {
+  it('preserva linhas de texto E countdown através do bundle runtime', () => {
+    const p: Project = {
+      theme: 'cprd',
+      meta: {
+        id: 'x',
+        tracer: { seconds: 30 },
+        events: {
+          '/blackbox.dat': [
+            { text: 'LEITURA NÃO AUTORIZADA', type: 'err' },
+            { type: 'countdown', from: 5, interval: 700, label: 'TRACE COMPLETE IN', alarm: true },
+            { text: 'saia. agora.', type: 'err' }
+          ]
+        }
+      },
+      files: [{ path: '/blackbox.dat', content: 'x', meta: { locked: true, tracer: true } }],
+      translations: {},
+      dirPath: null
+    }
+    const back = fromRuntimeBundle(toRuntimeBundle(p))
+    expect(back.meta.events).toEqual(p.meta.events)
+  })
+})
