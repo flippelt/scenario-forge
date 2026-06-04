@@ -6,7 +6,17 @@ import type { Dialog, DialogResponse, ScenarioMeta } from '../model/types'
 // player's words include any of its `match` keywords, printing its `lines`.
 // thinking/fallback/empty accept multiple lines (one per row).
 
-const RESPONSE_TYPES = ['', 'normal', 'muted', 'ok', 'err']
+// `type` = cor/estilo da linha no terminal. '' e 'normal' são equivalentes.
+const RESPONSE_TYPES: { value: string; label: string }[] = [
+  { value: '', label: 'normal — cor padrão' },
+  { value: 'muted', label: 'muted — apagado (texto secundário)' },
+  { value: 'ok', label: 'ok — verde (sucesso/afirmativo)' },
+  { value: 'err', label: 'err — vermelho (erro/negação)' }
+]
+
+// Stable reference for "no dialog yet". Returning a fresh `{}` from the store
+// selector would change identity every render → useSyncExternalStore loops.
+const EMPTY_DIALOG: Dialog = {}
 
 // textarea text <-> the engine's string | string[] (single line stays a string).
 const toText = (v?: string | string[]) => (Array.isArray(v) ? v.join('\n') : (v ?? ''))
@@ -18,7 +28,8 @@ function fromText(t: string): string | string[] | undefined {
 }
 
 export function DialogEditor() {
-  const dialog = useStore((s) => (s.project.meta.dialog ?? {}) as Dialog)
+  // Select the raw stored value (stable ref) and default OUTSIDE the selector.
+  const dialog = (useStore((s) => s.project.meta.dialog) ?? EMPTY_DIALOG) as Dialog
   const meta = useStore((s) => s.project.meta)
   const setMeta = useStore((s) => s.setMeta)
   const replaceMeta = useStore((s) => s.replaceMeta)
@@ -94,29 +105,39 @@ export function DialogEditor() {
         <div className="response-card" key={i}>
           <div className="response-card__head">
             <span className="muted">#{i + 1}</span>
+            <label className="muted" htmlFor={`rtype-${i}`}>estilo:</label>
             <select
-              value={r.type ?? ''}
+              id={`rtype-${i}`}
+              value={r.type && r.type !== 'normal' ? r.type : ''}
               style={{ width: 'auto' }}
+              title="Cor/estilo da linha no terminal"
               onChange={(e) => patchResponse(i, { type: e.target.value || undefined })}
             >
               {RESPONSE_TYPES.map((t) => (
-                <option key={t} value={t}>{t || 'normal'}</option>
+                <option key={t.value} value={t.value}>{t.label}</option>
               ))}
             </select>
             <span className="spacer" />
             <button onClick={() => setResponses(responses.filter((_, j) => j !== i))}>remover</button>
           </div>
-          <label>match (palavras-chave, separadas por vírgula)</label>
+          <label>match (palavras ou frases, separadas por ;)</label>
           <input
             type="text"
-            value={(r.match ?? []).join(', ')}
-            placeholder="nostromo, nave, cargueiro"
+            value={(r.match ?? []).join('; ')}
+            placeholder="nostromo; o que houve, exatamente?; autodestruição da nave"
+            // `;` separates alternatives so a phrase can itself contain commas.
+            // Don't filter empties WHILE typing (that would eat a freshly typed
+            // separator); trim per segment, drop empty segments on blur.
             onChange={(e) =>
-              patchResponse(i, {
-                match: e.target.value.split(',').map((s) => s.trim()).filter(Boolean)
-              })
+              patchResponse(i, { match: e.target.value.split(';').map((s) => s.trim()) })
             }
+            onBlur={() => patchResponse(i, { match: (r.match ?? []).filter(Boolean) })}
           />
+          <div className="help">
+            Casa quando a query do jogador <strong>contém</strong> o item (substring, ignora
+            maiúsculas). Cada item pode ser palavra ou frase; o <strong>;</strong> separa
+            alternativas — assim a frase pode ter vírgula.
+          </div>
           <label>lines (resposta, uma linha por row)</label>
           <textarea
             rows={3}
