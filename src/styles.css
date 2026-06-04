@@ -319,6 +319,51 @@ details.advanced > summary {
   margin: 0.5rem 0;
 }
 
+/* ============================== Dialog editor ============================== */
+
+.muted {
+  color: var(--fg-dim);
+}
+.dialog-editor .form-row {
+  margin-bottom: 0.6rem;
+}
+.responses-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0.7rem 0 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--fg-dim);
+}
+.response-card {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  margin-bottom: 0.5rem;
+}
+.response-card__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+.response-card__head .spacer {
+  flex: 1;
+}
+.response-card label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--fg-dim);
+  margin: 0.4rem 0 0.15rem;
+}
+.dialog-remove {
+  margin-top: 0.3rem;
+  color: var(--err);
+  border-color: var(--err);
+}
+
 /* ============================== Validation ============================== */
 
 .validation {

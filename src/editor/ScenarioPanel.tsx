@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useStore } from '../model/store'
 import { SYSTEMS, type ScenarioMeta } from '../model/types'
+import { DialogEditor } from './DialogEditor'
 
 // Friendly fields get forms; everything else round-trips through an advanced
-// JSON editor so nothing in scenario.json is ever lost.
-const FRIENDLY_KEYS = ['id', 'name', 'header', 'prompt', 'user', 'motd', 'checkMisleadsOnFail']
+// JSON editor so nothing in scenario.json is ever lost. `dialog` has its own
+// form (DialogEditor), so it's friendly too.
+const FRIENDLY_KEYS = ['id', 'name', 'header', 'prompt', 'user', 'motd', 'checkMisleadsOnFail', 'dialog']
 
 function advancedOf(meta: ScenarioMeta): Record<string, unknown> {
   const out: Record<string, unknown> = {}
@@ -119,7 +121,16 @@ export function ScenarioPanel() {
       </div>
 
       <details className="advanced">
-        <summary>Avançado (dialog, tracer, events, commands, aliases, locks, boot, i18n…)</summary>
+        <summary>Diálogo (query / ask)</summary>
+        <p className="help">
+          Respostas do banco de dados conversacional — o que <code>query &lt;assunto&gt;</code> /
+          <code>ask</code> respondem (ex.: a MU/TH/UR no tema alien).
+        </p>
+        <DialogEditor />
+      </details>
+
+      <details className="advanced">
+        <summary>Avançado (tracer, events, commands, aliases, locks, boot, i18n…)</summary>
         <p className="help">
           Edição direta do restante do scenario.json. Tudo aqui é preservado no round-trip.
         </p>
