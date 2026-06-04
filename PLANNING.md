@@ -1,7 +1,7 @@
 # scenario-forge — Planejamento
 
 > Editor desktop (Win/Mac/Linux) para autoria de cenários do **Immersive
-> Terminal for RPGs** / **rpgterm**: cria a árvore de `.md`/`.dat`, configura os
+> Terminal for RPGs**: cria a árvore de `.md`/`.dat`, configura os
 > flags de jogo (crackable, tracer, locked, dificuldade…) por formulário,
 > **testa no terminal real embutido**, e exporta a pasta versionável **e** o
 > JSON carregável em runtime.
@@ -92,7 +92,7 @@ scenario-forge/
 - Templates por sistema/tema; biblioteca de snippets de dialog.
 
 ### Futuro
-- Commit/PR direto pro `rpgterm`; múltiplos locales; "modo teste" com rolagem d20 vs DC;
+- Commit/PR direto pro repositório de jogo privado; múltiplos locales; "modo teste" com rolagem d20 vs DC;
   auto-update (Tauri updater); validação contra a versão do engine.
 
 ---
@@ -110,7 +110,7 @@ scenario-forge/
 O terminal hoje é um **app** (Vite), não uma **lib**. Para o preview usar o engine
 real sem duplicar código (e consistente com a extração já feita do `rpg-prop-kit`):
 
-- **Extrair um pacote `@rpgterm/engine`** (filesystem + commands + crack/tracer/wordle)
+- **Extrair um pacote `rpgterm-engine`** (filesystem + commands + crack/tracer/wordle)
   publicado no npm, consumido tanto pelo terminal quanto pelo editor.
 - Isso também elimina o **risco de divergência de schema**: o editor importa o
   schema/parser do mesmo pacote, garantindo que os flags gerados são exatamente
@@ -123,7 +123,7 @@ real sem duplicar código (e consistente com a extração já feita do `rpg-prop
 
 | Risco / decisão | Encaminhamento |
 |---|---|
-| Engine não é lib | Extrair `@rpgterm/engine` (Fase 0/1) |
+| Engine não é lib | Extrair `rpgterm-engine` (Fase 0/1) |
 | Schema dos flags pode divergir | Schema único vindo do engine + teste round-trip no CI |
 | Assinatura de código (custo) | Adiar; releases não-assinadas no início |
 | Nome do projeto | Confirmar (`scenario-forge`?) |
@@ -132,7 +132,7 @@ real sem duplicar código (e consistente com a extração já feita do `rpg-prop
 ---
 
 ## 8. Roadmap em fases
-- **Fase 0** ✅ — Scaffold Tauri+React+TS + CI build nos 3 OS. (Extração do `@rpgterm/engine` adiada para a Fase 2, onde o preview a exige.)
+- **Fase 0** ✅ — Scaffold Tauri+React+TS + CI build nos 3 OS. (Extração do `rpgterm-engine` adiada para a Fase 2, onde o preview a exige.)
 - **Fase 1** ✅ — Modelo de dados (fiel ao engine) + árvore + editores md/dat + painel de flags + scenario.json + validação + export/import + testes de round-trip. Sem preview.
-- **Fase 2** — Preview ao vivo (engine embutido). Pré-requisito: extrair `@rpgterm/engine`.
+- **Fase 2** — Preview ao vivo (engine embutido). Pré-requisito: extrair `rpgterm-engine`.
 - **Fase 3** — Import, templates, i18n avançado, polish, primeira release com binários.

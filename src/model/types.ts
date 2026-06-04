@@ -1,5 +1,5 @@
 // Data model for a scenario project. Anchored to the real terminal engine
-// (Immersive-Terminal-for-RPGs / rpgterm): see src/engine/commands.js +
+// (Immersive-Terminal-for-RPGs): see src/engine/commands.js +
 // src/themes/index.js. The flag vocabulary lives in ./flags.ts; the
 // serializers in ./serialize.ts convert between this in-memory shape and the
 // three on-the-wire formats (repo folder, runtime bundle, store).

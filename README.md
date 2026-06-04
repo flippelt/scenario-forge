@@ -1,8 +1,8 @@
 # scenario-forge
 
 Editor desktop (Windows · macOS · Linux) para criar cenários do
-[Immersive Terminal for RPGs](https://github.com/flippelt/Immersive-Terminal-for-RPGs)
-(e do `rpgterm`): monta a árvore de `.md`/`.dat`, configura os flags de jogo
+[Immersive Terminal for RPGs](https://github.com/flippelt/Immersive-Terminal-for-RPGs):
+monta a árvore de `.md`/`.dat`, configura os flags de jogo
 (crackable, tracer, locked, dificuldade…) por formulário e exporta a pasta
 versionável **e** o JSON carregável em runtime.
 
@@ -56,4 +56,4 @@ npm run build
 ## Próximos passos
 Roadmap em fases no [PLANNING.md](./PLANNING.md#8-roadmap-em-fases).
 Fase 2 = preview ao vivo com o engine real embutido (depende de extrair o
-pacote `@rpgterm/engine`).
+pacote `rpgterm-engine`).
