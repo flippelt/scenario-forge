@@ -6,7 +6,13 @@ import type { Dialog, DialogResponse, ScenarioMeta } from '../model/types'
 // player's words include any of its `match` keywords, printing its `lines`.
 // thinking/fallback/empty accept multiple lines (one per row).
 
-const RESPONSE_TYPES = ['', 'normal', 'muted', 'ok', 'err']
+// `type` = cor/estilo da linha no terminal. '' e 'normal' são equivalentes.
+const RESPONSE_TYPES: { value: string; label: string }[] = [
+  { value: '', label: 'normal — cor padrão' },
+  { value: 'muted', label: 'muted — apagado (texto secundário)' },
+  { value: 'ok', label: 'ok — verde (sucesso/afirmativo)' },
+  { value: 'err', label: 'err — vermelho (erro/negação)' }
+]
 
 // Stable reference for "no dialog yet". Returning a fresh `{}` from the store
 // selector would change identity every render → useSyncExternalStore loops.
@@ -99,13 +105,16 @@ export function DialogEditor() {
         <div className="response-card" key={i}>
           <div className="response-card__head">
             <span className="muted">#{i + 1}</span>
+            <label className="muted" htmlFor={`rtype-${i}`}>estilo:</label>
             <select
-              value={r.type ?? ''}
+              id={`rtype-${i}`}
+              value={r.type && r.type !== 'normal' ? r.type : ''}
               style={{ width: 'auto' }}
+              title="Cor/estilo da linha no terminal"
               onChange={(e) => patchResponse(i, { type: e.target.value || undefined })}
             >
               {RESPONSE_TYPES.map((t) => (
-                <option key={t} value={t}>{t || 'normal'}</option>
+                <option key={t.value} value={t.value}>{t.label}</option>
               ))}
             </select>
             <span className="spacer" />
@@ -116,11 +125,13 @@ export function DialogEditor() {
             type="text"
             value={(r.match ?? []).join(', ')}
             placeholder="nostromo, nave, cargueiro"
+            // Don't filter empties WHILE typing — that would eat a freshly typed
+            // comma (and block a second keyword). Trim per segment so the join
+            // reproduces the text; drop empty segments only on blur.
             onChange={(e) =>
-              patchResponse(i, {
-                match: e.target.value.split(',').map((s) => s.trim()).filter(Boolean)
-              })
+              patchResponse(i, { match: e.target.value.split(',').map((s) => s.trim()) })
             }
+            onBlur={() => patchResponse(i, { match: (r.match ?? []).filter(Boolean) })}
           />
           <label>lines (resposta, uma linha por row)</label>
           <textarea
