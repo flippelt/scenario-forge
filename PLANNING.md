@@ -6,9 +6,11 @@
 > **testa no terminal real embutido**, e exporta a pasta versionável **e** o
 > JSON carregável em runtime.
 
-**Status:** Fase 0/1 implementadas (scaffold Tauri+React+TS, modelo de dados
-fiel ao engine, editores, painel de flags, validação, export/import, CI e
-testes de round-trip). Fase 2 (preview ao vivo) ainda não.
+**Status:** Fases 0, 1 e 2 implementadas — scaffold Tauri+React+TS; modelo de
+dados fiel ao engine (consumido do pacote `rpgterm-engine` no npm); editores
+md/dat; painel de flags; validação; export/import; **preview ao vivo** (iframe
+do terminal real); CI multiplataforma; teste de paridade contra o engine real.
+Falta a Fase 3 (templates, import avançado, polish).
 
 ---
 
