@@ -7,6 +7,7 @@ import {
   exportRuntimeBundle,
   importRuntimeBundleText
 } from '../fs/adapter'
+import { promptText, confirmDialog, alertDialog } from '../ui/dialog'
 
 export function Toolbar({ onShowScenario }: { onShowScenario: () => void }) {
   const project = useStore((s) => s.project)
@@ -30,7 +31,7 @@ export function Toolbar({ onShowScenario }: { onShowScenario: () => void }) {
         onShowScenario()
       }
     } catch (e) {
-      alert(e instanceof Error ? e.message : String(e))
+      alertDialog({ title: 'Erro ao abrir', message: e instanceof Error ? e.message : String(e) })
     }
   }
 
@@ -39,7 +40,7 @@ export function Toolbar({ onShowScenario }: { onShowScenario: () => void }) {
       const dir = await saveScenarioFolder(project)
       if (dir) markSaved(dir)
     } catch (e) {
-      alert(e instanceof Error ? e.message : String(e))
+      alertDialog({ title: 'Erro ao salvar', message: e instanceof Error ? e.message : String(e) })
     }
   }
 
@@ -50,19 +51,32 @@ export function Toolbar({ onShowScenario }: { onShowScenario: () => void }) {
         loadProject(importRuntimeBundleText(String(reader.result)))
         onShowScenario()
       } catch (e) {
-        alert('Bundle inválido: ' + (e instanceof Error ? e.message : String(e)))
+        alertDialog({ title: 'Bundle inválido', message: e instanceof Error ? e.message : String(e) })
       }
     }
     reader.readAsText(file)
+  }
+
+  const handleNew = async () => {
+    if (!dirty || (await confirmDialog({ title: 'Novo cenário', message: 'Descartar alterações não salvas?', okLabel: 'Descartar' })))
+      newProject()
+  }
+
+  const handleAddLang = async () => {
+    const code = await promptText({
+      title: 'Novo idioma',
+      message: 'Código de 2 letras (ex.: pt, es, fr)',
+      placeholder: 'pt',
+      validate: (v) => (/^[a-z]{2}$/.test(v.trim()) ? null : 'Use exatamente 2 letras minúsculas.')
+    })
+    if (code) addLang(code.trim())
   }
 
   return (
     <div className="toolbar">
       <span className="brand">▒ scenario-forge</span>
 
-      <button onClick={() => { if (!dirty || confirm('Descartar alterações não salvas?')) newProject() }}>
-        Novo
-      </button>
+      <button onClick={handleNew}>Novo</button>
       <button onClick={handleOpen} disabled={!tauri} title={tauri ? '' : 'Requer o app desktop'}>
         Abrir pasta
       </button>
@@ -94,10 +108,8 @@ export function Toolbar({ onShowScenario }: { onShowScenario: () => void }) {
         value={lang}
         style={{ width: 'auto' }}
         onChange={(e) => {
-          if (e.target.value === '__add') {
-            const code = window.prompt('Código do idioma (2 letras, ex.: pt)')
-            if (code && /^[a-z]{2}$/.test(code.trim())) addLang(code.trim())
-          } else setLang(e.target.value)
+          if (e.target.value === '__add') handleAddLang()
+          else setLang(e.target.value)
         }}
       >
         <option value="base">base</option>

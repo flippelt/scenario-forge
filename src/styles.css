@@ -363,3 +363,43 @@ details.advanced > summary {
   font-family: var(--mono);
   color: var(--fg-dim);
 }
+
+/* ============================== Dialogs ============================== */
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: grid;
+  place-items: center;
+  z-index: 100;
+}
+.dialog {
+  background: var(--bg-panel);
+  border: 1px solid var(--accent);
+  border-radius: 9px;
+  padding: 1.1rem 1.2rem;
+  width: min(440px, 90vw);
+  box-shadow: 0 16px 48px -16px rgba(0, 0, 0, 0.7);
+}
+.dialog h3 {
+  margin: 0 0 0.5rem;
+  font-family: var(--mono);
+  color: var(--accent);
+  font-size: 1rem;
+}
+.dialog-msg {
+  color: var(--fg-dim);
+  margin: 0 0 0.7rem;
+  font-size: 0.88rem;
+  white-space: pre-wrap;
+}
+.dialog input[type='text'] {
+  margin-bottom: 0.3rem;
+}
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
