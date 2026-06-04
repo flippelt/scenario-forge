@@ -16,3 +16,6 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Local build log
+tauri-build.log

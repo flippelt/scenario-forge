@@ -1,0 +1,77 @@
+name: release
+
+# Dispara ao empurrar uma tag v* (ex.: git tag v0.1.0 && git push --tags),
+# ou manualmente em Actions → release → Run workflow.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: '--target universal-apple-darwin'
+          - platform: ubuntu-latest
+            args: ''
+          - platform: windows-latest
+            args: ''
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install Linux deps
+        if: matrix.platform == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libxdo-dev libssl-dev
+
+      - run: npm ci
+
+      - name: Build, sign (se houver secrets) e publicar a release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # --- Ganchos de assinatura macOS (preencha os secrets quando tiver
+          # uma conta Apple Developer; vazios => build sem assinatura) ---
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # --- Windows Authenticode: configure bundle.windows.certificateThumbprint
+          # no tauri.conf.json (ou importe o PFX num passo anterior). Sem isso o
+          # instalador sai não-assinado (aviso SmartScreen). ---
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'scenario-forge ${{ github.ref_name }}'
+          releaseBody: |
+            Instaladores do scenario-forge. Baixe o do seu sistema:
+            - **Windows**: `.msi` ou `.exe` (NSIS)
+            - **macOS**: `.dmg` (universal arm64 + x64)
+            - **Linux**: `.AppImage` ou `.deb`
+
+            > Builds não-assinados por enquanto: o SO pode avisar "editor não verificado".
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
