@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react'
 import { useStore } from '../model/store'
 import { SYSTEMS, type ScenarioMeta } from '../model/types'
 import { DialogEditor } from './DialogEditor'
+import { EventsEditor } from './EventsEditor'
 
 // Friendly fields get forms; everything else round-trips through an advanced
 // JSON editor so nothing in scenario.json is ever lost. `dialog` has its own
 // form (DialogEditor), so it's friendly too.
-const FRIENDLY_KEYS = ['id', 'name', 'header', 'prompt', 'user', 'motd', 'checkMisleadsOnFail', 'dialog']
+const FRIENDLY_KEYS = ['id', 'name', 'header', 'prompt', 'user', 'motd', 'checkMisleadsOnFail', 'dialog', 'events']
 
 function advancedOf(meta: ScenarioMeta): Record<string, unknown> {
   const out: Record<string, unknown> = {}
@@ -130,7 +131,16 @@ export function ScenarioPanel() {
       </details>
 
       <details className="advanced">
-        <summary>Avançado (tracer, events, commands, aliases, locks, boot, i18n…)</summary>
+        <summary>Eventos (ao desbloquear um arquivo)</summary>
+        <p className="help">
+          Linhas que tocam logo após um arquivo ser desbloqueado — alarme, recado do vilão,
+          uma contagem regressiva (<code>countdown</code>).
+        </p>
+        <EventsEditor />
+      </details>
+
+      <details className="advanced">
+        <summary>Avançado (tracer, commands, aliases, locks, boot, i18n…)</summary>
         <p className="help">
           Edição direta do restante do scenario.json. Tudo aqui é preservado no round-trip.
         </p>
