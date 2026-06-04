@@ -3,6 +3,7 @@
 // preview) it degrades to JSON-bundle download/upload. Tauri APIs are imported
 // dynamically so the web build never references a missing global.
 
+import { decodeBundle } from 'rpgterm-engine'
 import type { Project, SystemId } from '../model/types'
 import { SYSTEMS } from '../model/types'
 import { fromRepoFolder, toRepoFolder, toRuntimeBundle, fromRuntimeBundle } from '../model/serialize'
@@ -108,6 +109,18 @@ export async function exportRuntimeBundle(project: Project): Promise<void> {
 export function importRuntimeBundleText(text: string): Project {
   const parsed = JSON.parse(text) as Record<string, unknown>
   return fromRuntimeBundle(parsed)
+}
+
+/** Import from a terminal share link or raw token. Accepts a full URL with a
+ *  `?scenario64=` param or a bare token; decodes with the engine's decodeBundle
+ *  (same codec the terminal uses) and rebuilds the project. */
+export function importShareLink(input: string): Project {
+  let token = input.trim()
+  const m = token.match(/[?&]scenario64=([^&\s#]+)/)
+  if (m) token = m[1]
+  const bundle = decodeBundle(token) as Record<string, unknown>
+  if (!bundle || typeof bundle !== 'object') throw new Error('Token não decodifica para um cenário.')
+  return fromRuntimeBundle(bundle)
 }
 
 function downloadText(filename: string, text: string, mime: string) {
