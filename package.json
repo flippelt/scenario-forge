@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Desktop editor for Immersive Terminal / rpgterm scenarios",
+  "description": "Desktop editor for Immersive Terminal for RPGs scenarios",
   "license": "MIT",
   "scripts": {
     "dev": "vite",
