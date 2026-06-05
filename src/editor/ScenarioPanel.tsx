@@ -3,11 +3,12 @@ import { useStore } from '../model/store'
 import { SYSTEMS, type ScenarioMeta } from '../model/types'
 import { DialogEditor } from './DialogEditor'
 import { EventsEditor } from './EventsEditor'
+import { TracerEditor } from './TracerEditor'
 
 // Friendly fields get forms; everything else round-trips through an advanced
 // JSON editor so nothing in scenario.json is ever lost. `dialog` has its own
 // form (DialogEditor), so it's friendly too.
-const FRIENDLY_KEYS = ['id', 'name', 'header', 'prompt', 'user', 'motd', 'checkMisleadsOnFail', 'dialog', 'events']
+const FRIENDLY_KEYS = ['id', 'name', 'header', 'prompt', 'user', 'motd', 'checkMisleadsOnFail', 'dialog', 'events', 'tracer']
 
 function advancedOf(meta: ScenarioMeta): Record<string, unknown> {
   const out: Record<string, unknown> = {}
@@ -140,7 +141,15 @@ export function ScenarioPanel() {
       </details>
 
       <details className="advanced">
-        <summary>Avançado (tracer, commands, aliases, locks, boot, i18n…)</summary>
+        <summary>Tracer / rastreador</summary>
+        <p className="help">
+          O cronômetro de ICE/recon que um arquivo vigiado (<code>tracer: true</code>) arma.
+        </p>
+        <TracerEditor />
+      </details>
+
+      <details className="advanced">
+        <summary>Avançado (commands, aliases, locks, boot, selfDestruct, i18n…)</summary>
         <p className="help">
           Edição direta do restante do scenario.json. Tudo aqui é preservado no round-trip.
         </p>
