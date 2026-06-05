@@ -47,21 +47,15 @@ jobs:
 
       - run: npm ci
 
-      - name: Build, sign (se houver secrets) e publicar a release
+      - name: Build e publicar a release (sem assinatura)
         uses: tauri-apps/tauri-action@v0
+        # Sem assinatura por ora (política "só se for grátis"): NÃO definir as
+        # env APPLE_*/Windows aqui — definir vazias faz o tauri TENTAR assinar
+        # com um certificado vazio e o macOS falha em `security import`. Para
+        # ligar a assinatura no futuro, adicione as env APPLE_* (preenchidas)
+        # de volta neste step, e o thumbprint Windows no tauri.conf.json.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # --- Ganchos de assinatura macOS (preencha os secrets quando tiver
-          # uma conta Apple Developer; vazios => build sem assinatura) ---
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          # --- Windows Authenticode: configure bundle.windows.certificateThumbprint
-          # no tauri.conf.json (ou importe o PFX num passo anterior). Sem isso o
-          # instalador sai não-assinado (aviso SmartScreen). ---
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'scenario-forge ${{ github.ref_name }}'
