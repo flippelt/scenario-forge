@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { renderMarkdown } from 'rpgterm-engine'
 import { useStore } from '../model/store'
 import { fileExt } from '../model/vfs'
 
@@ -13,6 +15,7 @@ export function FileEditor() {
       : ''
   )
   const setContent = useStore((s) => s.setContent)
+  const [preview, setPreview] = useState(false)
 
   if (!selectedPath || !file) {
     return (
@@ -27,29 +30,46 @@ export function FileEditor() {
   const editingBase = lang === 'base'
   const value = editingBase ? file.content : translatedBody
   const ext = fileExt(selectedPath)
+  const isMd = ext === 'md'
+  const showPreview = isMd && preview
 
   return (
     <div className="col">
       <div className="editor">
-        <div className="path">{selectedPath}{!editingBase && `  ·  [${lang}]`}</div>
+        <div className="path">
+          <span>{selectedPath}{!editingBase && `  ·  [${lang}]`}</span>
+          {isMd && (
+            <button className="md-toggle" onClick={() => setPreview((p) => !p)}>
+              {preview ? '✎ Editar' : '👁 Pré-visualizar'}
+            </button>
+          )}
+        </div>
         {!editingBase ? (
           <div className="banner">
             Editando a tradução <strong>{lang}</strong> — apenas o corpo do texto.
             Os flags (lock/crack/tracer) ficam no arquivo base.
           </div>
-        ) : ext === 'md' ? (
+        ) : isMd ? (
           <div className="banner">Arquivo <strong>.md</strong> — renderizado como markdown no terminal.</div>
         ) : (
           <div className="banner">
             Arquivo de dados — o painel à direita controla os flags do frontmatter.
           </div>
         )}
-        <textarea
-          value={value}
-          spellCheck={false}
-          placeholder={editingBase ? 'Conteúdo do arquivo…' : `Tradução (${lang})…`}
-          onChange={(e) => setContent(selectedPath, e.target.value)}
-        />
+        {showPreview ? (
+          <div className="md-preview" aria-label="pré-visualização do markdown">
+            {renderMarkdown(value).map((l, i) => (
+              <div key={i} className={`md-line ${l.type ?? ''}`}>{l.text || ' '}</div>
+            ))}
+          </div>
+        ) : (
+          <textarea
+            value={value}
+            spellCheck={false}
+            placeholder={editingBase ? 'Conteúdo do arquivo…' : `Tradução (${lang})…`}
+            onChange={(e) => setContent(selectedPath, e.target.value)}
+          />
+        )}
       </div>
     </div>
   )

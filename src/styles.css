@@ -218,6 +218,35 @@ ul.tree > li > .row {
   font-family: var(--mono);
   color: var(--accent);
   word-break: break-all;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.md-toggle {
+  margin-left: auto;
+  flex: none;
+  font-size: 0.78rem;
+  padding: 0.2rem 0.55rem;
+}
+.md-preview {
+  height: 100%;
+  overflow: auto;
+  font-family: var(--mono);
+  line-height: 1.5;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--bg);
+}
+.md-line {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.md-line.ok {
+  color: var(--accent);
+}
+.md-line.muted {
+  color: var(--fg-dim);
 }
 .editor .banner {
   background: var(--accent-soft);
