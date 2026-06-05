@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useStore } from '../model/store'
 import {
   isTauri,
@@ -102,6 +102,29 @@ export function Toolbar({
     })
     if (code) addLang(code.trim())
   }
+
+  // Ctrl/Cmd+S → salvar pasta (desktop) ou exportar bundle (web).
+  const projectRef = useRef(project)
+  projectRef.current = project
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault()
+        const p = projectRef.current
+        if (tauri) {
+          saveScenarioFolder(p)
+            .then((dir) => dir && markSaved(dir))
+            .catch((err) =>
+              alertDialog({ title: 'Erro ao salvar', message: err instanceof Error ? err.message : String(err) })
+            )
+        } else {
+          exportRuntimeBundle(p)
+        }
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [tauri, markSaved])
 
   return (
     <div className="toolbar">
