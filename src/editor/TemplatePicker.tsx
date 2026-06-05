@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useStore } from '../model/store'
 import { TEMPLATES } from '../model/templates'
 
@@ -5,6 +6,14 @@ import { TEMPLATES } from '../model/templates'
 // project (the caller already confirmed discarding unsaved work).
 export function TemplatePicker({ onClose, onPicked }: { onClose: () => void; onPicked: () => void }) {
   const loadProject = useStore((s) => s.loadProject)
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
 
   return (
     <div

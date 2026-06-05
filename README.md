@@ -6,10 +6,10 @@ monta a árvore de `.md`/`.dat`, configura os flags de jogo
 (crackable, tracer, locked, dificuldade…) por formulário e exporta a pasta
 versionável **e** o JSON carregável em runtime.
 
-> **Status:** Fases 1 e 2 prontas — editor de árvore, editor md/dat, painel de
-> flags, `scenario.json`, validação, export/import e **preview ao vivo** já
-> funcionam. Próxima: Fase 3 (templates, import avançado, polish). Veja
-> [PLANNING.md](./PLANNING.md).
+> **Status:** Fases 1–3 implementadas — árvore de arquivos, editores md/dat,
+> painel de flags, formulários do `scenario.json` (incl. **diálogo** e **eventos**),
+> validação, export/import (pasta · bundle · link), **preview ao vivo** (postMessage)
+> e **templates** por sistema. Resta só polish opcional. Veja [PLANNING.md](./PLANNING.md).
 
 ## Stack
 - **Tauri 2** (Rust) + **React + Vite + TypeScript**
@@ -43,18 +43,19 @@ npm run build
 (`node scripts/gen-icon.mjs` recria o PNG-fonte sem dependências).
 
 ## O que dá pra fazer agora
+- **Começar de um template** por sistema (cofre/IBM, investigação com tracer/Cyberpunk…) ou em branco.
 - Criar/abrir/renomear/excluir arquivos numa árvore de cenário.
-- Editar `.md` (prosa) e `.dat` (dados), com **painel de flags** dirigido pelo
-  vocabulário real do engine (lock/crack/decrypt/tracer/recon/mídia).
-- Editar o `scenario.json` (tema, id, name, header, prompt, motd…) com um editor
-  avançado em JSON para o restante (dialog, tracer, events, commands…).
+- Editar `.md` (com **pré-visualização** do render do terminal) e `.dat` (dados),
+  com **painel de flags** dirigido pelo vocabulário real do engine (lock/crack/decrypt/tracer/recon/mídia).
+- `scenario.json` por **formulário**: tema, id, name, motd…, **diálogo** (`query`/`ask`)
+  e **eventos** (countdown) — o editor de JSON avançado fica só para o que é raro.
 - Traduções por idioma (`files.<lang>/`), com checagem de paridade.
-- **Validação** cruzada (arquivo vigiado sem bloco tracer, bloqueio impossível
-  de abrir, flag no arquivo errado, tradução órfã…).
-- **Export**: pasta `scenario.json + files/ + files.<lang>/` (desktop) e bundle
-  JSON único (desktop e web). **Import** do bundle.
-- **▶ Preview ao vivo**: embute o terminal real (publicado) e carrega o cenário
-  atual via `?scenario64=` — crackar/decifrar/tracer dentro do editor.
+- **Validação** cruzada (vigiado sem bloco tracer, bloqueio impossível de abrir,
+  flag no arquivo errado, tradução órfã…).
+- **Export**: pasta versionável (desktop) e bundle JSON (desktop/web).
+  **Import**: bundle ou **link/token** (`?scenario64=`).
+- **▶ Preview ao vivo**: embute o terminal real e envia o cenário por **postMessage**
+  — crackar/decifrar/tracer no editor, sem limite de tamanho.
 
 ## Distribuição
 `npm run tauri build` gera os instaladores em `src-tauri/target/release/bundle/`
@@ -64,4 +65,4 @@ ora — veja [SIGNING.md](./SIGNING.md).
 
 ## Próximos passos
 Roadmap em fases no [PLANNING.md](./PLANNING.md#8-roadmap-em-fases).
-Fase 3 = templates por sistema, import de pasta avançado e polish.
+Resta polish opcional (arrastar/soltar na árvore, mais atalhos de teclado).

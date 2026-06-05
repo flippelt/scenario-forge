@@ -38,6 +38,14 @@ export function PreviewPanel({ onClose }: { onClose: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
   // External link (carries the bundle in the URL); only relevant for sharing
   // outside the editor, where the size cap applies.
   const { extUrl, size, tooBig } = useMemo(() => {
