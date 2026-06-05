@@ -9,11 +9,17 @@ import type { FileMeta, FrontMatterValue } from './types'
 
 export type FlagType = 'bool' | 'number' | 'string'
 
+/** Bilingual string: PT-BR (default) and EN, resolved by the panel's locale. */
+export interface LocStr {
+  pt: string
+  en: string
+}
+
 export interface FlagDef {
   key: string
-  label: string
+  label: LocStr
   type: FlagType
-  help: string
+  help: LocStr
   /** Engine default (shown as a hint; not written unless the user sets it). */
   defaultHint?: string
   placeholder?: string
@@ -23,8 +29,8 @@ export interface FlagDef {
 
 export interface FlagGroup {
   id: string
-  label: string
-  help?: string
+  label: LocStr
+  help?: LocStr
   fields: FlagDef[]
 }
 
@@ -35,127 +41,178 @@ const isWatched = (m: FileMeta) => isLocked(m) && m.tracer === true
 export const FLAG_GROUPS: FlagGroup[] = [
   {
     id: 'lock',
-    label: 'Bloqueio',
-    help: 'Um arquivo bloqueado exige crack, senha ou o minigame de decrypt para ser lido.',
+    label: { pt: 'Bloqueio', en: 'Lock' },
+    help: {
+      pt: 'Um arquivo bloqueado exige crack, senha ou o minigame de decrypt para ser lido.',
+      en: 'A locked file requires a crack, a password or the decrypt minigame to be read.'
+    },
     fields: [
       {
         key: 'locked',
-        label: 'Bloqueado',
+        label: { pt: 'Bloqueado', en: 'Locked' },
         type: 'bool',
-        help: 'Marca o arquivo como criptografado. Os demais campos só valem se isto estiver ligado.'
+        help: {
+          pt: 'Marca o arquivo como criptografado. Os demais campos só valem se isto estiver ligado.',
+          en: 'Marks the file as encrypted. The other fields only apply when this is on.'
+        }
       },
       {
         key: 'password',
-        label: 'Senha',
+        label: { pt: 'Senha', en: 'Password' },
         type: 'string',
-        help: 'Chave para `unlock`. Senha só de números: o editor coloca aspas automaticamente.',
+        help: {
+          pt: 'Chave para `unlock`. Senha só de números: o editor coloca aspas automaticamente.',
+          en: 'Key for `unlock`. Numeric-only password: the editor quotes it automatically.'
+        },
         when: isLocked
       },
       {
         key: 'reveals',
-        label: 'Revela (caminhos)',
+        label: { pt: 'Revela (caminhos)', en: 'Reveals (paths)' },
         type: 'string',
-        help: 'Ao desbloquear, mostra a senha destes arquivos. Vários separados por vírgula. Ex.: /vault.dat,/safe.dat',
+        help: {
+          pt: 'Ao desbloquear, mostra a senha destes arquivos. Vários separados por vírgula. Ex.: /vault.dat,/safe.dat',
+          en: 'On unlock, shows the password of these files. Comma-separate several. E.g. /vault.dat,/safe.dat'
+        },
         when: isLocked
       }
     ]
   },
   {
     id: 'crack',
-    label: 'Força bruta (crack)',
-    help: '`crack` quebra o arquivo. Pode ser livre, exigir um teste (DC) ou ser impossível.',
+    label: { pt: 'Força bruta (crack)', en: 'Brute force (crack)' },
+    help: {
+      pt: '`crack` quebra o arquivo. Pode ser livre, exigir um teste (DC) ou ser impossível.',
+      en: '`crack` breaks the file. It can be free, require a check (DC) or be impossible.'
+    },
     fields: [
       {
         key: 'crackable',
-        label: 'Crackável',
+        label: { pt: 'Crackável', en: 'Crackable' },
         type: 'bool',
-        help: 'Desligue para um arquivo "endurecido" — força bruta falha; só senha/decrypt abrem.',
+        help: {
+          pt: 'Desligue para um arquivo "endurecido" — força bruta falha; só senha/decrypt abrem.',
+          en: 'Turn off for a "hardened" file — brute force fails; only password/decrypt open it.'
+        },
         defaultHint: 'true',
         when: isLocked
       },
       {
         key: 'crackDC',
-        label: 'DC do crack',
+        label: { pt: 'DC do crack', en: 'Crack DC' },
         type: 'number',
-        help: 'Define um teste de dificuldade: o jogador rola e digita o resultado. Sem DC, o crack é automático.',
+        help: {
+          pt: 'Define um teste de dificuldade: o jogador rola e digita o resultado. Sem DC, o crack é automático.',
+          en: 'Sets a difficulty check: the player rolls and types the result. Without a DC, the crack is automatic.'
+        },
         placeholder: 'ex.: 15',
         when: isCrackable
       },
       {
         key: 'crackAttempts',
-        label: 'Tentativas',
+        label: { pt: 'Tentativas', en: 'Attempts' },
         type: 'number',
-        help: 'Máximo de tentativas de crack antes do lockout.',
+        help: {
+          pt: 'Máximo de tentativas de crack antes do lockout.',
+          en: 'Maximum crack attempts before lockout.'
+        },
         defaultHint: '3',
         placeholder: '3',
         when: (m) => isCrackable(m) && m.crackDC != null
       },
       {
         key: 'crackTime',
-        label: 'Duração da barra (ms)',
+        label: { pt: 'Duração da barra (ms)', en: 'Bar duration (ms)' },
         type: 'number',
-        help: 'Tempo da animação de força bruta.',
+        help: {
+          pt: 'Tempo da animação de força bruta.',
+          en: 'Duration of the brute-force animation.'
+        },
         defaultHint: 'tema/5000',
         placeholder: '5000',
         when: isCrackable
       },
       {
         key: 'lockLabel',
-        label: 'Rótulo do crack',
+        label: { pt: 'Rótulo do crack', en: 'Crack label' },
         type: 'string',
-        help: 'Texto na barra de progresso da força bruta.',
+        help: {
+          pt: 'Texto na barra de progresso da força bruta.',
+          en: 'Text on the brute-force progress bar.'
+        },
         defaultHint: 'tema/“BRUTE-FORCING”',
         when: isCrackable
       },
       {
         key: 'crackFailMessage',
-        label: 'Mensagem de falha',
+        label: { pt: 'Mensagem de falha', en: 'Failure message' },
         type: 'string',
-        help: 'Mostrada quando o arquivo NÃO é crackável e o jogador tenta força bruta.',
+        help: {
+          pt: 'Mostrada quando o arquivo NÃO é crackável e o jogador tenta força bruta.',
+          en: 'Shown when the file is NOT crackable and the player tries brute force.'
+        },
         when: (m) => isLocked(m) && m.crackable === false
       },
       {
         key: 'crackSuccessMessage',
-        label: 'Mensagem de sucesso',
+        label: { pt: 'Mensagem de sucesso', en: 'Success message' },
         type: 'string',
-        help: 'Substitui o texto padrão de crack bem-sucedido.',
+        help: {
+          pt: 'Substitui o texto padrão de crack bem-sucedido.',
+          en: 'Overrides the default successful-crack text.'
+        },
         when: isCrackable
       }
     ]
   },
   {
     id: 'decrypt',
-    label: 'Decrypt (minigame)',
-    help: 'Minigame estilo Wordle para descobrir a chave. Liga por padrão em arquivos não-crackáveis.',
+    label: { pt: 'Decrypt (minigame)', en: 'Decrypt (minigame)' },
+    help: {
+      pt: 'Minigame estilo Wordle para descobrir a chave. Liga por padrão em arquivos não-crackáveis.',
+      en: 'Wordle-style minigame to find the key. On by default for non-crackable files.'
+    },
     fields: [
       {
         key: 'decryptGame',
-        label: 'Minigame ativo',
+        label: { pt: 'Minigame ativo', en: 'Minigame enabled' },
         type: 'bool',
-        help: 'Força o minigame ligado/desligado. Padrão: ligado quando o arquivo não é crackável.',
+        help: {
+          pt: 'Força o minigame ligado/desligado. Padrão: ligado quando o arquivo não é crackável.',
+          en: 'Forces the minigame on/off. Default: on when the file is not crackable.'
+        },
         defaultHint: '= (crackable false)',
         when: isLocked
       },
       {
         key: 'decryptTarget',
-        label: 'Palavra-alvo',
+        label: { pt: 'Palavra-alvo', en: 'Target word' },
         type: 'string',
-        help: 'Fixa a palavra do minigame. Em branco: o engine sorteia uma estável no load.',
+        help: {
+          pt: 'Fixa a palavra do minigame. Em branco: o engine sorteia uma estável no load.',
+          en: 'Pins the minigame word. Blank: the engine picks a stable one at load.'
+        },
         when: isLocked
       },
       {
         key: 'decryptLabel',
-        label: 'Rótulo do decrypt',
+        label: { pt: 'Rótulo do decrypt', en: 'Decrypt label' },
         type: 'string',
-        help: 'Texto na barra de progresso do decrypt/unlock.',
+        help: {
+          pt: 'Texto na barra de progresso do decrypt/unlock.',
+          en: 'Text on the decrypt/unlock progress bar.'
+        },
         defaultHint: 'tema/“DECRYPTING”',
         when: isLocked
       },
       {
         key: 'decryptTime',
-        label: 'Duração da barra (ms)',
+        label: { pt: 'Duração da barra (ms)', en: 'Bar duration (ms)' },
         type: 'number',
-        help: 'Tempo da animação de decrypt.',
+        help: {
+          pt: 'Tempo da animação de decrypt.',
+          en: 'Duration of the decrypt animation.'
+        },
         defaultHint: 'tema/1500',
         placeholder: '1500',
         when: isLocked
@@ -164,48 +221,66 @@ export const FLAG_GROUPS: FlagGroup[] = [
   },
   {
     id: 'tracer',
-    label: 'Tracer / vigilância',
-    help: 'Arquivo "vigiado": uma intrusão arma o rastreador. O `check` revela a posição de segurança.',
+    label: { pt: 'Tracer / vigilância', en: 'Tracer / surveillance' },
+    help: {
+      pt: 'Arquivo "vigiado": uma intrusão arma o rastreador. O `check` revela a posição de segurança.',
+      en: 'A "watched" file: an intrusion arms the tracer. `check` reveals the security posture.'
+    },
     fields: [
       {
         key: 'tracer',
-        label: 'Vigiado',
+        label: { pt: 'Vigiado', en: 'Watched' },
         type: 'bool',
-        help: 'Arma o tracer ao crackar/falhar. Exige um bloco `tracer` no scenario.json para ter efeito.',
+        help: {
+          pt: 'Arma o tracer ao crackar/falhar. Exige um bloco `tracer` no scenario.json para ter efeito.',
+          en: 'Arms the tracer on crack/fail. Requires a `tracer` block in scenario.json to take effect.'
+        },
         when: isLocked
       },
       {
         key: 'tracerSeconds',
-        label: 'Janela (s)',
+        label: { pt: 'Janela (s)', en: 'Window (s)' },
         type: 'number',
-        help: 'Segundos até o rastreio completar.',
+        help: {
+          pt: 'Segundos até o rastreio completar.',
+          en: 'Seconds until the trace completes.'
+        },
         defaultHint: 'tema/30',
         placeholder: '30',
         when: isWatched
       },
       {
         key: 'tracerPenalty',
-        label: 'Penalidade',
+        label: { pt: 'Penalidade', en: 'Penalty' },
         type: 'number',
-        help: 'Penalidade aplicada quando o tracer completa.',
+        help: {
+          pt: 'Penalidade aplicada quando o tracer completa.',
+          en: 'Penalty applied when the tracer completes.'
+        },
         defaultHint: '7',
         placeholder: '7',
         when: isWatched
       },
       {
         key: 'tracerStartAfter',
-        label: 'Começa após',
+        label: { pt: 'Começa após', en: 'Starts after' },
         type: 'number',
-        help: 'Tentativas de "graça" antes do rastreio começar a contar.',
+        help: {
+          pt: 'Tentativas de "graça" antes do rastreio começar a contar.',
+          en: '"Grace" attempts before the trace starts counting.'
+        },
         defaultHint: '0',
         placeholder: '0',
         when: isWatched
       },
       {
         key: 'tracerNocrackSeconds',
-        label: 'Janela (não-crackável)',
+        label: { pt: 'Janela (não-crackável)', en: 'Window (non-crackable)' },
         type: 'number',
-        help: 'Janela menor de rastreio ao falhar força bruta num arquivo endurecido.',
+        help: {
+          pt: 'Janela menor de rastreio ao falhar força bruta num arquivo endurecido.',
+          en: 'Shorter trace window when brute force fails on a hardened file.'
+        },
         defaultHint: 'tema/5',
         placeholder: '5',
         when: isWatched
@@ -214,41 +289,56 @@ export const FLAG_GROUPS: FlagGroup[] = [
   },
   {
     id: 'recon',
-    label: 'Recon (check)',
-    help: 'O comando `check` lê a postura de segurança. Com DC, vira um teste; só revela tudo no GM mode.',
+    label: { pt: 'Recon (check)', en: 'Recon (check)' },
+    help: {
+      pt: 'O comando `check` lê a postura de segurança. Com DC, vira um teste; só revela tudo no GM mode.',
+      en: 'The `check` command reads the security posture. With a DC it becomes a check; only GM mode reveals all.'
+    },
     fields: [
       {
         key: 'checkDC',
-        label: 'DC do check',
+        label: { pt: 'DC do check', en: 'Check DC' },
         type: 'number',
-        help: 'Sem DC o scan é livre e preciso. Com DC, a qualidade do scan depende da rolagem.',
+        help: {
+          pt: 'Sem DC o scan é livre e preciso. Com DC, a qualidade do scan depende da rolagem.',
+          en: 'Without a DC the scan is free and accurate. With a DC, scan quality depends on the roll.'
+        },
         placeholder: 'ex.: 12',
         when: isLocked
       },
       {
         key: 'checkAlert',
-        label: 'Alerta de rescan',
+        label: { pt: 'Alerta de rescan', en: 'Rescan alert' },
         type: 'string',
-        help: 'Texto do alerta de atividade suspeita ao escanear o mesmo arquivo de novo. Sobrescreve o do tema.',
+        help: {
+          pt: 'Texto do alerta de atividade suspeita ao escanear o mesmo arquivo de novo. Sobrescreve o do tema.',
+          en: 'Suspicious-activity alert text when scanning the same file again. Overrides the theme’s.'
+        },
         when: (m) => isLocked(m) && m.checkDC != null
       }
     ]
   },
   {
     id: 'media',
-    label: 'Mídia',
+    label: { pt: 'Mídia', en: 'Media' },
     fields: [
       {
         key: 'image',
-        label: 'Imagem (URL/data URI)',
+        label: { pt: 'Imagem (URL/data URI)', en: 'Image (URL/data URI)' },
         type: 'string',
-        help: 'Renderiza uma imagem com filtro CRT acima do texto (foto Esper, mapa, mugshot).'
+        help: {
+          pt: 'Renderiza uma imagem com filtro CRT acima do texto (foto Esper, mapa, mugshot).',
+          en: 'Renders a CRT-filtered image above the text (Esper photo, map, mugshot).'
+        }
       },
       {
         key: 'imageAlt',
-        label: 'Texto alternativo',
+        label: { pt: 'Texto alternativo', en: 'Alt text' },
         type: 'string',
-        help: 'Descrição da imagem.',
+        help: {
+          pt: 'Descrição da imagem.',
+          en: 'Description of the image.'
+        },
         when: (m) => m.image != null && m.image !== ''
       }
     ]

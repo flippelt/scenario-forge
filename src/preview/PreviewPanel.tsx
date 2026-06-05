@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { encodeBundle } from 'rpgterm-engine'
 import { useStore } from '../model/store'
+import { useT } from '../i18n'
 import { toRuntimeBundle } from '../model/serialize'
 
 // Live preview: embed the deployed terminal and push the current scenario via
@@ -12,6 +13,7 @@ const TERMINAL_ORIGIN = 'https://flippelt.github.io'
 const URL_WARN = 30000
 
 export function PreviewPanel({ onClose }: { onClose: () => void }) {
+  const t = useT()
   const project = useStore((s) => s.project)
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
@@ -61,20 +63,20 @@ export function PreviewPanel({ onClose }: { onClose: () => void }) {
     <div className="preview-overlay">
       <div className="preview-bar">
         <span className="brand">▶ Preview</span>
-        <span className="muted">terminal real · {(size / 1024).toFixed(1)} kB</span>
+        <span className="muted">{t('terminal real', 'real terminal')} · {(size / 1024).toFixed(1)} kB</span>
         <span className="spacer" />
-        <button onClick={send}>↻ Atualizar</button>
+        <button onClick={send}>↻ {t('Atualizar', 'Refresh')}</button>
         <a
           className="ext-link"
           href={extUrl}
           target="_blank"
           rel="noreferrer"
-          title={tooBig ? 'Cenário grande: o link pode não abrir, mas o preview embutido (postMessage) funciona' : ''}
+          title={tooBig ? t('Cenário grande: o link pode não abrir, mas o preview embutido (postMessage) funciona', 'Large scenario: the link may not open, but the embedded preview (postMessage) works') : ''}
         >
-          Abrir no navegador ↗{tooBig ? ' ⚠' : ''}
+          {t('Abrir no navegador', 'Open in browser')} ↗{tooBig ? ' ⚠' : ''}
         </a>
         <button className="primary" onClick={onClose}>
-          Fechar
+          {t('Fechar', 'Close')}
         </button>
       </div>
       <iframe

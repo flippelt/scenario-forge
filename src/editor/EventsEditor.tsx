@@ -1,21 +1,14 @@
 import { useStore } from '../model/store'
+import { useT } from '../i18n'
 import { promptText } from '../ui/dialog'
 import type { Line, ScenarioMeta } from '../model/types'
 
 // Friendly editor for `events` — lines that play right after a file is
-// unlocked (an alarm, a villain's taunt, a countdown). Each event is keyed by
-// the file path. Lines keep their ORDER; text lines are editable, a `countdown`
-// gets dedicated fields, and any other special object is preserved read-only.
+// unlocked. Lines keep their ORDER; text lines are editable, a `countdown` gets
+// dedicated fields, and any other special object is preserved read-only.
 
 type Events = Record<string, Line[]>
 const EMPTY_EVENTS: Events = {}
-
-const LINE_TYPES = [
-  { value: '', label: 'normal' },
-  { value: 'muted', label: 'muted' },
-  { value: 'ok', label: 'ok (verde)' },
-  { value: 'err', label: 'err (vermelho)' }
-]
 
 type Kind = 'text' | 'countdown' | 'raw'
 function kindOf(l: Line): Kind {
@@ -30,10 +23,18 @@ const textOf = (l: Line) => (typeof l === 'string' ? l : (l.text ?? ''))
 const typeOf = (l: Line) => (typeof l === 'string' ? '' : (l.type ?? ''))
 
 export function EventsEditor() {
+  const t = useT()
   const events = (useStore((s) => s.project.meta.events) ?? EMPTY_EVENTS) as Events
   const meta = useStore((s) => s.project.meta)
   const setMeta = useStore((s) => s.setMeta)
   const replaceMeta = useStore((s) => s.replaceMeta)
+
+  const LINE_TYPES = [
+    { value: '', label: 'normal' },
+    { value: 'muted', label: t('muted (apagado)', 'muted (dim)') },
+    { value: 'ok', label: t('ok (verde)', 'ok (green)') },
+    { value: 'err', label: t('err (vermelho)', 'err (red)') }
+  ]
 
   const paths = Object.keys(events)
 
@@ -51,14 +52,14 @@ export function EventsEditor() {
 
   const addPath = async () => {
     const p = await promptText({
-      title: 'Novo evento',
-      message: 'Caminho do arquivo cujo desbloqueio dispara o evento',
+      title: t('Novo evento', 'New event'),
+      message: t('Caminho do arquivo cujo desbloqueio dispara o evento', 'Path of the file whose unlock triggers the event'),
       placeholder: '/blackbox.dat',
       validate: (v) => {
-        const t = v.trim()
-        if (!t) return 'Informe um caminho.'
-        const norm = t.startsWith('/') ? t : '/' + t
-        if (events[norm]) return 'Já existe um evento para esse caminho.'
+        const tx = v.trim()
+        if (!tx) return t('Informe um caminho.', 'Enter a path.')
+        const norm = tx.startsWith('/') ? tx : '/' + tx
+        if (events[norm]) return t('Já existe um evento para esse caminho.', 'There is already an event for that path.')
         return null
       }
     })
@@ -88,16 +89,16 @@ export function EventsEditor() {
   return (
     <div className="events-editor">
       {paths.length === 0 && (
-        <p className="help">Nenhum evento. Use “+ evento” para disparar linhas ao desbloquear um arquivo.</p>
+        <p className="help">{t('Nenhum evento. Use “+ evento” para disparar linhas ao desbloquear um arquivo.', 'No events. Use “+ event” to play lines when a file is unlocked.')}</p>
       )}
 
       {paths.map((path) => (
         <div className="event-card" key={path}>
           <div className="event-card__head">
-            <span className="muted">ao abrir</span>
+            <span className="muted">{t('ao abrir', 'on open')}</span>
             <code className="event-path">{path}</code>
             <span className="spacer" />
-            <button onClick={() => removePath(path)}>remover evento</button>
+            <button onClick={() => removePath(path)}>{t('remover evento', 'remove event')}</button>
           </div>
 
           {events[path].map((line, i) => {
@@ -106,9 +107,9 @@ export function EventsEditor() {
             return (
               <div className="event-line" key={i}>
                 <div className="event-line__ctrls">
-                  <button onClick={() => moveLine(path, i, -1)} disabled={i === 0} title="subir">↑</button>
-                  <button onClick={() => moveLine(path, i, 1)} disabled={i === events[path].length - 1} title="descer">↓</button>
-                  <button onClick={() => removeLine(path, i)} title="remover linha">✕</button>
+                  <button onClick={() => moveLine(path, i, -1)} disabled={i === 0} title={t('subir', 'move up')}>↑</button>
+                  <button onClick={() => moveLine(path, i, 1)} disabled={i === events[path].length - 1} title={t('descer', 'move down')}>↓</button>
+                  <button onClick={() => removeLine(path, i)} title={t('remover linha', 'remove line')}>✕</button>
                 </div>
 
                 {kind === 'text' && (
@@ -116,23 +117,23 @@ export function EventsEditor() {
                     <input
                       type="text"
                       value={textOf(line)}
-                      placeholder="texto da linha"
+                      placeholder={t('texto da linha', 'line text')}
                       onChange={(e) => {
-                        const t = typeOf(line)
-                        updateLine(path, i, t ? { text: e.target.value, type: t } : { text: e.target.value })
+                        const ty = typeOf(line)
+                        updateLine(path, i, ty ? { text: e.target.value, type: ty } : { text: e.target.value })
                       }}
                     />
                     <select
                       value={typeOf(line)}
                       style={{ width: 'auto' }}
-                      title="cor/estilo"
+                      title={t('cor/estilo', 'color/style')}
                       onChange={(e) => {
                         const v = e.target.value
                         updateLine(path, i, v ? { text: textOf(line), type: v } : { text: textOf(line) })
                       }}
                     >
-                      {LINE_TYPES.map((t) => (
-                        <option key={t.value} value={t.value}>{t.label}</option>
+                      {LINE_TYPES.map((lt) => (
+                        <option key={lt.value} value={lt.value}>{lt.label}</option>
                       ))}
                     </select>
                   </div>
@@ -172,7 +173,7 @@ export function EventsEditor() {
 
                 {kind === 'raw' && (
                   <div className="event-line__body">
-                    <span className="badge">linha especial — edite no JSON avançado</span>
+                    <span className="badge">{t('linha especial — edite no JSON avançado', 'special line — edit in advanced JSON')}</span>
                     <code className="raw-line">{JSON.stringify(line)}</code>
                   </div>
                 )}
@@ -181,7 +182,7 @@ export function EventsEditor() {
           })}
 
           <div className="event-add">
-            <button onClick={() => setLines(path, [...events[path], { text: '' }])}>+ linha</button>
+            <button onClick={() => setLines(path, [...events[path], { text: '' }])}>{t('+ linha', '+ line')}</button>
             <button onClick={() => setLines(path, [...events[path], { type: 'countdown', from: 5, interval: 700, label: 'TRACE COMPLETE IN', alarm: true }])}>
               + countdown
             </button>
@@ -189,7 +190,7 @@ export function EventsEditor() {
         </div>
       ))}
 
-      <button className="event-add-path" onClick={addPath}>+ evento</button>
+      <button className="event-add-path" onClick={addPath}>{t('+ evento', '+ event')}</button>
     </div>
   )
 }

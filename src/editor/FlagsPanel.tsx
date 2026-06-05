@@ -1,4 +1,5 @@
 import { useStore } from '../model/store'
+import { useT } from '../i18n'
 import { FLAG_GROUPS, coerceFlag, type FlagDef } from '../model/flags'
 import { isFlagCapable } from '../model/vfs'
 import type { FileMeta } from '../model/types'
@@ -8,6 +9,7 @@ import type { FileMeta } from '../model/types'
 const TRISTATE = new Set(['crackable', 'decryptGame'])
 
 function Field({ def, path, meta }: { def: FlagDef; path: string; meta: FileMeta }) {
+  const t = useT()
   const setFlag = useStore((s) => s.setFlag)
   const unsetFlag = useStore((s) => s.unsetFlag)
   const raw = meta[def.key]
@@ -24,9 +26,9 @@ function Field({ def, path, meta }: { def: FlagDef; path: string; meta: FileMeta
           else setFlag(path, def.key, v === 'true')
         }}
       >
-        <option value="">(padrão)</option>
-        <option value="true">sim</option>
-        <option value="false">não</option>
+        <option value="">{t('(padrão)', '(default)')}</option>
+        <option value="true">{t('sim', 'yes')}</option>
+        <option value="false">{t('não', 'no')}</option>
       </select>
     )
   } else if (def.type === 'bool') {
@@ -66,7 +68,7 @@ function Field({ def, path, meta }: { def: FlagDef; path: string; meta: FileMeta
   return (
     <div className="flag-field">
       <div className="head">
-        <span className="name">{def.label}</span>
+        <span className="name">{t(def.label.pt, def.label.en)}</span>
         {def.type === 'bool' && !TRISTATE.has(def.key) ? (
           control
         ) : def.defaultHint ? (
@@ -74,12 +76,13 @@ function Field({ def, path, meta }: { def: FlagDef; path: string; meta: FileMeta
         ) : null}
       </div>
       {def.type !== 'bool' || TRISTATE.has(def.key) ? control : null}
-      <div className="help">{def.help}</div>
+      <div className="help">{t(def.help.pt, def.help.en)}</div>
     </div>
   )
 }
 
 export function FlagsPanel() {
+  const t = useT()
   const selectedPath = useStore((s) => s.selectedPath)
   const lang = useStore((s) => s.lang)
   const file = useStore((s) => s.project.files.find((f) => f.path === s.selectedPath))
@@ -88,7 +91,7 @@ export function FlagsPanel() {
     return (
       <div className="col flags">
         <p className="col-title">Flags</p>
-        <p className="muted">Selecione um arquivo de dados para configurar os flags.</p>
+        <p className="muted">{t('Selecione um arquivo de dados para configurar os flags.', 'Select a data file to configure its flags.')}</p>
       </div>
     )
   }
@@ -96,7 +99,7 @@ export function FlagsPanel() {
     return (
       <div className="col flags">
         <p className="col-title">Flags</p>
-        <p className="muted">Os flags vivem no arquivo base. Volte ao idioma “base” para editá-los.</p>
+        <p className="muted">{t('Os flags vivem no arquivo base. Volte ao idioma “base” para editá-los.', 'Flags live on the base file. Switch back to the “base” language to edit them.')}</p>
       </div>
     )
   }
@@ -105,8 +108,10 @@ export function FlagsPanel() {
       <div className="col flags">
         <p className="col-title">Flags</p>
         <p className="muted">
-          Arquivos <code>.md</code> são tratados como prosa. Para usar flags de bloqueio,
-          use um arquivo de dados (<code>.dat</code>).
+          {t('Arquivos ', 'Files ')}<code>.md</code>
+          {t(' são tratados como prosa. Para usar flags de bloqueio, use um arquivo de dados (',
+            ' are treated as prose. To use lock flags, use a data file (')}
+          <code>.dat</code>).
         </p>
       </div>
     )
@@ -121,8 +126,8 @@ export function FlagsPanel() {
         if (visible.length === 0) return null
         return (
           <details key={g.id} className="flag-group" open={g.id === 'lock'}>
-            <summary>{g.label}</summary>
-            {g.help && <div className="group-help">{g.help}</div>}
+            <summary>{t(g.label.pt, g.label.en)}</summary>
+            {g.help && <div className="group-help">{t(g.help.pt, g.help.en)}</div>}
             {visible.map((f) => (
               <Field key={f.key} def={f} path={selectedPath} meta={meta} />
             ))}

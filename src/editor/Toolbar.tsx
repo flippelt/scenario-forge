@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useStore } from '../model/store'
+import { useT } from '../i18n'
 import {
   isTauri,
   openScenarioFolder,
@@ -19,6 +20,7 @@ export function Toolbar({
   onPreview: () => void
   onTemplates: () => void
 }) {
+  const t = useT()
   const project = useStore((s) => s.project)
   const dirty = useStore((s) => s.dirty)
   const lang = useStore((s) => s.lang)
@@ -27,10 +29,13 @@ export function Toolbar({
   const newProject = useStore((s) => s.newProject)
   const loadProject = useStore((s) => s.loadProject)
   const markSaved = useStore((s) => s.markSaved)
+  const locale = useStore((s) => s.locale)
+  const setLocale = useStore((s) => s.setLocale)
   const fileInput = useRef<HTMLInputElement>(null)
 
   const tauri = isTauri()
   const langs = Object.keys(project.translations)
+  const discard = { okLabel: t('Descartar', 'Discard'), cancelLabel: t('Cancelar', 'Cancel') }
 
   const handleOpen = async () => {
     try {
@@ -40,7 +45,7 @@ export function Toolbar({
         onShowScenario()
       }
     } catch (e) {
-      alertDialog({ title: 'Erro ao abrir', message: e instanceof Error ? e.message : String(e) })
+      alertDialog({ title: t('Erro ao abrir', 'Open error'), message: e instanceof Error ? e.message : String(e) })
     }
   }
 
@@ -49,7 +54,7 @@ export function Toolbar({
       const dir = await saveScenarioFolder(project)
       if (dir) markSaved(dir)
     } catch (e) {
-      alertDialog({ title: 'Erro ao salvar', message: e instanceof Error ? e.message : String(e) })
+      alertDialog({ title: t('Erro ao salvar', 'Save error'), message: e instanceof Error ? e.message : String(e) })
     }
   }
 
@@ -60,18 +65,18 @@ export function Toolbar({
         loadProject(importRuntimeBundleText(String(reader.result)))
         onShowScenario()
       } catch (e) {
-        alertDialog({ title: 'Bundle inválido', message: e instanceof Error ? e.message : String(e) })
+        alertDialog({ title: t('Bundle inválido', 'Invalid bundle'), message: e instanceof Error ? e.message : String(e) })
       }
     }
     reader.readAsText(file)
   }
 
   const handleImportLink = async () => {
-    if (dirty && !(await confirmDialog({ title: 'Importar link', message: 'Descartar alterações não salvas?', okLabel: 'Descartar' })))
+    if (dirty && !(await confirmDialog({ title: t('Importar link', 'Import link'), message: t('Descartar alterações não salvas?', 'Discard unsaved changes?'), ...discard })))
       return
     const input = await promptText({
-      title: 'Importar de link',
-      message: 'Cole o link de compartilhamento (…?scenario64=…) ou o token',
+      title: t('Importar de link', 'Import from link'),
+      message: t('Cole o link de compartilhamento (…?scenario64=…) ou o token', 'Paste the share link (…?scenario64=…) or the token'),
       placeholder: 'https://…/?scenario64=eyJ0aGVtZ…'
     })
     if (!input || !input.trim()) return
@@ -79,26 +84,26 @@ export function Toolbar({
       loadProject(importShareLink(input))
       onShowScenario()
     } catch (e) {
-      alertDialog({ title: 'Link inválido', message: e instanceof Error ? e.message : String(e) })
+      alertDialog({ title: t('Link inválido', 'Invalid link'), message: e instanceof Error ? e.message : String(e) })
     }
   }
 
   const handleNew = async () => {
-    if (!dirty || (await confirmDialog({ title: 'Novo cenário', message: 'Descartar alterações não salvas?', okLabel: 'Descartar' })))
+    if (!dirty || (await confirmDialog({ title: t('Novo cenário', 'New scenario'), message: t('Descartar alterações não salvas?', 'Discard unsaved changes?'), ...discard })))
       newProject()
   }
 
   const handleTemplates = async () => {
-    if (!dirty || (await confirmDialog({ title: 'Novo de template', message: 'Descartar alterações não salvas?', okLabel: 'Descartar' })))
+    if (!dirty || (await confirmDialog({ title: t('Novo de template', 'New from template'), message: t('Descartar alterações não salvas?', 'Discard unsaved changes?'), ...discard })))
       onTemplates()
   }
 
   const handleAddLang = async () => {
     const code = await promptText({
-      title: 'Novo idioma',
-      message: 'Código de 2 letras (ex.: pt, es, fr)',
+      title: t('Novo idioma', 'New language'),
+      message: t('Código de 2 letras (ex.: pt, es, fr)', '2-letter code (e.g. pt, es, fr)'),
       placeholder: 'pt',
-      validate: (v) => (/^[a-z]{2}$/.test(v.trim()) ? null : 'Use exatamente 2 letras minúsculas.')
+      validate: (v) => (/^[a-z]{2}$/.test(v.trim()) ? null : t('Use exatamente 2 letras minúsculas.', 'Use exactly 2 lowercase letters.'))
     })
     if (code) addLang(code.trim())
   }
@@ -115,7 +120,7 @@ export function Toolbar({
           saveScenarioFolder(p)
             .then((dir) => dir && markSaved(dir))
             .catch((err) =>
-              alertDialog({ title: 'Erro ao salvar', message: err instanceof Error ? err.message : String(err) })
+              alertDialog({ title: t('Erro ao salvar', 'Save error'), message: err instanceof Error ? err.message : String(err) })
             )
         } else {
           exportRuntimeBundle(p)
@@ -124,30 +129,33 @@ export function Toolbar({
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tauri, markSaved])
+
+  const desktopOnly = tauri ? '' : t('Requer o app desktop', 'Requires the desktop app')
 
   return (
     <div className="toolbar">
       <span className="brand">▒ scenario-forge</span>
 
-      <button onClick={handleNew}>Novo</button>
-      <button onClick={handleTemplates}>Templates</button>
-      <button onClick={handleOpen} disabled={!tauri} title={tauri ? '' : 'Requer o app desktop'}>
-        Abrir pasta
+      <button onClick={handleNew}>{t('Novo', 'New')}</button>
+      <button onClick={handleTemplates}>{t('Templates', 'Templates')}</button>
+      <button onClick={handleOpen} disabled={!tauri} title={desktopOnly}>
+        {t('Abrir pasta', 'Open folder')}
       </button>
-      <button className="primary" onClick={handleSave} disabled={!tauri} title={tauri ? '' : 'Requer o app desktop'}>
-        Salvar pasta
+      <button className="primary" onClick={handleSave} disabled={!tauri} title={desktopOnly}>
+        {t('Salvar pasta', 'Save folder')}
       </button>
 
       <span className="sep" />
 
-      <button onClick={() => exportRuntimeBundle(project)}>Exportar bundle</button>
-      <button onClick={() => fileInput.current?.click()}>Importar bundle</button>
-      <button onClick={handleImportLink}>Importar link</button>
+      <button onClick={() => exportRuntimeBundle(project)}>{t('Exportar bundle', 'Export bundle')}</button>
+      <button onClick={() => fileInput.current?.click()}>{t('Importar bundle', 'Import bundle')}</button>
+      <button onClick={handleImportLink}>{t('Importar link', 'Import link')}</button>
 
       <span className="sep" />
 
-      <button className="primary" onClick={onPreview}>▶ Preview</button>
+      <button className="primary" onClick={onPreview}>▶ {t('Preview', 'Preview')}</button>
       <input
         ref={fileInput}
         type="file"
@@ -162,7 +170,7 @@ export function Toolbar({
 
       <span className="sep" />
 
-      <label htmlFor="lang" className="muted">Idioma:</label>
+      <label htmlFor="lang" className="muted">{t('Idioma do cenário:', 'Scenario language:')}</label>
       <select
         id="lang"
         value={lang}
@@ -176,12 +184,19 @@ export function Toolbar({
         {langs.map((l) => (
           <option key={l} value={l}>{l}</option>
         ))}
-        <option value="__add">+ idioma…</option>
+        <option value="__add">{t('+ idioma…', '+ language…')}</option>
       </select>
 
       <span className="spacer" />
-      {dirty && <span className="dot" title="Alterações não salvas">●</span>}
-      <span className="muted">{tauri ? 'desktop' : 'web (export/import só por bundle)'}</span>
+      {dirty && <span className="dot" title={t('Alterações não salvas', 'Unsaved changes')}>●</span>}
+      <button
+        className="locale-toggle"
+        title={t('Idioma do editor', 'Editor language')}
+        onClick={() => setLocale(locale === 'pt' ? 'en' : 'pt')}
+      >
+        🌐 {locale.toUpperCase()}
+      </button>
+      <span className="muted">{tauri ? 'desktop' : t('web (export/import só por bundle)', 'web (export/import via bundle only)')}</span>
     </div>
   )
 }

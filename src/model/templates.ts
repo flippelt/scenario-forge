@@ -4,25 +4,32 @@
 
 import type { Project } from './types'
 import { emptyProject } from './types'
+import type { LocStr } from './flags'
 
 export interface Template {
   id: string
-  label: string
-  description: string
+  label: LocStr
+  description: LocStr
   build: () => Project
 }
 
 export const TEMPLATES: Template[] = [
   {
     id: 'blank',
-    label: 'Em branco',
-    description: 'Cenário vazio. Escolha o tema no painel do scenario.json e comece do zero.',
+    label: { pt: 'Em branco', en: 'Blank' },
+    description: {
+      pt: 'Cenário vazio. Escolha o tema no painel do scenario.json e comece do zero.',
+      en: 'Empty scenario. Pick the theme in the scenario.json panel and start from scratch.'
+    },
     build: () => emptyProject('ibm')
   },
   {
     id: 'vault',
-    label: 'Cofre bloqueado (IBM)',
-    description: 'Um arquivo de dados endurecido (sem crack), aberto só por senha. Bom para um segredo central.',
+    label: { pt: 'Cofre bloqueado (IBM)', en: 'Locked vault (IBM)' },
+    description: {
+      pt: 'Um arquivo de dados endurecido (sem crack), aberto só por senha. Bom para um segredo central.',
+      en: 'A hardened data file (no crack), opened only by password. Good for one central secret.'
+    },
     build: (): Project => ({
       theme: 'ibm',
       meta: {
@@ -54,8 +61,11 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'tracer-case',
-    label: 'Investigação com tracer (Cyberpunk RED)',
-    description: 'Arquivo vigiado: crackar/escanear arma o rastreador. Inclui o bloco tracer no scenario.json e um teste de recon (checkDC).',
+    label: { pt: 'Investigação com tracer (Cyberpunk RED)', en: 'Tracer investigation (Cyberpunk RED)' },
+    description: {
+      pt: 'Arquivo vigiado: crackar/escanear arma o rastreador. Inclui o bloco tracer no scenario.json e um teste de recon (checkDC).',
+      en: 'A watched file: cracking/scanning arms the tracer. Includes the scenario.json tracer block and a recon check (checkDC).'
+    },
     build: (): Project => ({
       theme: 'cprd',
       meta: {

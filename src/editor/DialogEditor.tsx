@@ -1,18 +1,6 @@
 import { useStore } from '../model/store'
+import { useT } from '../i18n'
 import type { Dialog, DialogResponse, ScenarioMeta } from '../model/types'
-
-// Friendly editor for the `dialog` block — what powers the `query`/`ask`
-// commands (e.g. the alien MU/TH/UR database). A response fires when the
-// player's words include any of its `match` keywords, printing its `lines`.
-// thinking/fallback/empty accept multiple lines (one per row).
-
-// `type` = cor/estilo da linha no terminal. '' e 'normal' são equivalentes.
-const RESPONSE_TYPES: { value: string; label: string }[] = [
-  { value: '', label: 'normal — cor padrão' },
-  { value: 'muted', label: 'muted — apagado (texto secundário)' },
-  { value: 'ok', label: 'ok — verde (sucesso/afirmativo)' },
-  { value: 'err', label: 'err — vermelho (erro/negação)' }
-]
 
 // Stable reference for "no dialog yet". Returning a fresh `{}` from the store
 // selector would change identity every render → useSyncExternalStore loops.
@@ -28,11 +16,19 @@ function fromText(t: string): string | string[] | undefined {
 }
 
 export function DialogEditor() {
-  // Select the raw stored value (stable ref) and default OUTSIDE the selector.
+  const t = useT()
   const dialog = (useStore((s) => s.project.meta.dialog) ?? EMPTY_DIALOG) as Dialog
   const meta = useStore((s) => s.project.meta)
   const setMeta = useStore((s) => s.setMeta)
   const replaceMeta = useStore((s) => s.replaceMeta)
+
+  // `type` = cor/estilo da linha no terminal. '' e 'normal' são equivalentes.
+  const RESPONSE_TYPES = [
+    { value: '', label: t('normal — cor padrão', 'normal — default color') },
+    { value: 'muted', label: t('muted — apagado (secundário)', 'muted — dim (secondary)') },
+    { value: 'ok', label: t('ok — verde (sucesso)', 'ok — green (success)') },
+    { value: 'err', label: t('err — vermelho (erro)', 'err — red (error)') }
+  ]
 
   const responses = dialog.responses ?? []
 
@@ -60,44 +56,42 @@ export function DialogEditor() {
   return (
     <div className="dialog-editor">
       <div className="form-row">
-        <label>thinking (linhas mostradas antes da resposta)</label>
+        <label>{t('thinking (linhas antes da resposta)', 'thinking (lines shown before the answer)')}</label>
         <textarea
           rows={2}
           spellCheck={false}
           value={toText(dialog.thinking)}
-          placeholder={'ACESSANDO BANCO DE DADOS...'}
+          placeholder={t('ACESSANDO BANCO DE DADOS...', 'ACCESSING DATABASE...')}
           onChange={(e) => update({ thinking: fromText(e.target.value) })}
         />
       </div>
 
       <div className="form-row">
-        <label>fallback (quando nada casa)</label>
+        <label>{t('fallback (quando nada casa)', 'fallback (when nothing matches)')}</label>
         <textarea
           rows={2}
           spellCheck={false}
           value={toText(dialog.fallback)}
-          placeholder={'REGISTRO NÃO ENCONTRADO.'}
+          placeholder={t('REGISTRO NÃO ENCONTRADO.', 'RECORD NOT FOUND.')}
           onChange={(e) => update({ fallback: fromText(e.target.value) })}
         />
       </div>
 
       <div className="form-row">
-        <label>empty (quando o jogador não digita assunto)</label>
+        <label>{t('empty (quando não digita assunto)', 'empty (when no subject is typed)')}</label>
         <textarea
           rows={2}
           spellCheck={false}
           value={toText(dialog.empty)}
-          placeholder={'ESPECIFIQUE UM ASSUNTO.'}
+          placeholder={t('ESPECIFIQUE UM ASSUNTO.', 'SPECIFY A SUBJECT.')}
           onChange={(e) => update({ empty: fromText(e.target.value) })}
         />
       </div>
 
       <div className="responses-head">
-        <span>Respostas ({responses.length})</span>
-        <button
-          onClick={() => setResponses([...responses, { match: [], lines: [] }])}
-        >
-          + resposta
+        <span>{t('Respostas', 'Responses')} ({responses.length})</span>
+        <button onClick={() => setResponses([...responses, { match: [], lines: [] }])}>
+          {t('+ resposta', '+ response')}
         </button>
       </div>
 
@@ -105,40 +99,38 @@ export function DialogEditor() {
         <div className="response-card" key={i}>
           <div className="response-card__head">
             <span className="muted">#{i + 1}</span>
-            <label className="muted" htmlFor={`rtype-${i}`}>estilo:</label>
+            <label className="muted" htmlFor={`rtype-${i}`}>{t('estilo:', 'style:')}</label>
             <select
               id={`rtype-${i}`}
               value={r.type && r.type !== 'normal' ? r.type : ''}
               style={{ width: 'auto' }}
-              title="Cor/estilo da linha no terminal"
+              title={t('Cor/estilo da linha no terminal', 'Line color/style in the terminal')}
               onChange={(e) => patchResponse(i, { type: e.target.value || undefined })}
             >
-              {RESPONSE_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
+              {RESPONSE_TYPES.map((rt) => (
+                <option key={rt.value} value={rt.value}>{rt.label}</option>
               ))}
             </select>
             <span className="spacer" />
-            <button onClick={() => setResponses(responses.filter((_, j) => j !== i))}>remover</button>
+            <button onClick={() => setResponses(responses.filter((_, j) => j !== i))}>{t('remover', 'remove')}</button>
           </div>
-          <label>match (palavras ou frases, separadas por ;)</label>
+          <label>{t('match (palavras ou frases, separadas por ;)', 'match (words or phrases, separated by ;)')}</label>
           <input
             type="text"
             value={(r.match ?? []).join('; ')}
-            placeholder="nostromo; o que houve, exatamente?; autodestruição da nave"
-            // `;` separates alternatives so a phrase can itself contain commas.
-            // Don't filter empties WHILE typing (that would eat a freshly typed
-            // separator); trim per segment, drop empty segments on blur.
-            onChange={(e) =>
-              patchResponse(i, { match: e.target.value.split(';').map((s) => s.trim()) })
-            }
+            placeholder={t('nostromo; o que houve, exatamente?; autodestruição', 'nostromo; what happened, exactly?; self-destruct')}
+            onChange={(e) => patchResponse(i, { match: e.target.value.split(';').map((s) => s.trim()) })}
             onBlur={() => patchResponse(i, { match: (r.match ?? []).filter(Boolean) })}
           />
           <div className="help">
-            Casa quando a query do jogador <strong>contém</strong> o item (substring, ignora
-            maiúsculas). Cada item pode ser palavra ou frase; o <strong>;</strong> separa
-            alternativas — assim a frase pode ter vírgula.
+            {t('Casa quando a query do jogador ', 'Matches when the player query ')}
+            <strong>{t('contém', 'contains')}</strong>
+            {t(' o item (substring, ignora maiúsculas). Cada item pode ser palavra ou frase; o ',
+              ' the item (substring, case-insensitive). Each item can be a word or a phrase; ')}
+            <strong>;</strong>
+            {t(' separa alternativas — assim a frase pode ter vírgula.', ' separates alternatives — so a phrase can contain a comma.')}
           </div>
-          <label>lines (resposta, uma linha por row)</label>
+          <label>{t('lines (resposta, uma linha por row)', 'lines (the answer, one line per row)')}</label>
           <textarea
             rows={3}
             spellCheck={false}
@@ -150,7 +142,7 @@ export function DialogEditor() {
 
       {hasAny && (
         <button className="dialog-remove" onClick={removeDialog}>
-          remover diálogo inteiro
+          {t('remover diálogo inteiro', 'remove entire dialog')}
         </button>
       )}
     </div>

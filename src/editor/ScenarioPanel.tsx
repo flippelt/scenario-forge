@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useStore } from '../model/store'
+import { useT } from '../i18n'
 import { SYSTEMS, type ScenarioMeta } from '../model/types'
 import { DialogEditor } from './DialogEditor'
 import { EventsEditor } from './EventsEditor'
@@ -19,6 +20,7 @@ function advancedOf(meta: ScenarioMeta): Record<string, unknown> {
 }
 
 export function ScenarioPanel() {
+  const t = useT()
   const meta = useStore((s) => s.project.meta)
   const theme = useStore((s) => s.project.theme)
   const setMeta = useStore((s) => s.setMeta)
@@ -41,7 +43,7 @@ export function ScenarioPanel() {
     try {
       const parsed = JSON.parse(text)
       if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-        setAdvErr('O JSON avançado precisa ser um objeto.')
+        setAdvErr(t('O JSON avançado precisa ser um objeto.', 'The advanced JSON must be an object.'))
         return
       }
       setAdvErr(null)
@@ -49,7 +51,7 @@ export function ScenarioPanel() {
       for (const k of FRIENDLY_KEYS) if (meta[k] !== undefined) friendly[k] = meta[k]
       replaceMeta({ ...friendly, ...parsed } as ScenarioMeta)
     } catch (e) {
-      setAdvErr(e instanceof Error ? e.message : 'JSON inválido')
+      setAdvErr(e instanceof Error ? e.message : t('JSON inválido', 'Invalid JSON'))
     }
   }
 
@@ -60,7 +62,7 @@ export function ScenarioPanel() {
       <p className="col-title">scenario.json</p>
 
       <div className="form-row">
-        <label>Sistema (tema)</label>
+        <label>{t('Sistema (tema)', 'System (theme)')}</label>
         <select value={theme} onChange={(e) => setTheme(e.target.value as typeof theme)}>
           {SYSTEMS.map((s) => (
             <option key={s.id} value={s.id}>
@@ -68,13 +70,13 @@ export function ScenarioPanel() {
             </option>
           ))}
         </select>
-        <div className="help">Define a pasta de destino no repo: scenarios/{theme}/{meta.id || '…'}/</div>
+        <div className="help">{t('Define a pasta de destino no repo:', 'Sets the target folder in the repo:')} scenarios/{theme}/{meta.id || '…'}/</div>
       </div>
 
       <div className="form-row">
         <label>id</label>
         <input type="text" value={meta.id ?? ''} onChange={(e) => setMeta({ id: e.target.value })} />
-        <div className="help">Identificador da pasta. Sem espaços (ex.: heimdall).</div>
+        <div className="help">{t('Identificador da pasta. Sem espaços (ex.: heimdall).', 'Folder identifier. No spaces (e.g. heimdall).')}</div>
       </div>
 
       <div className="form-row">
@@ -85,7 +87,7 @@ export function ScenarioPanel() {
       <div className="form-row">
         <label>header</label>
         <input type="text" value={meta.header ?? ''} onChange={(e) => setMeta({ header: e.target.value })} />
-        <div className="help">Cabeçalho da barra do terminal (opcional; herda do tema).</div>
+        <div className="help">{t('Cabeçalho da barra do terminal (opcional; herda do tema).', 'Terminal title-bar header (optional; inherits from theme).')}</div>
       </div>
 
       <div className="form-row">
@@ -99,14 +101,14 @@ export function ScenarioPanel() {
       </div>
 
       <div className="form-row">
-        <label>motd (uma linha por entrada)</label>
+        <label>{t('motd (uma linha por entrada)', 'motd (one line per entry)')}</label>
         <textarea
           rows={5}
           spellCheck={false}
           value={motdText}
           onChange={(e) => setMeta({ motd: e.target.value.split('\n') })}
         />
-        <div className="help">Banner inicial mostrado ao abrir o terminal.</div>
+        <div className="help">{t('Banner inicial mostrado ao abrir o terminal.', 'Opening banner shown when the terminal loads.')}</div>
       </div>
 
       <div className="form-row">
@@ -119,39 +121,43 @@ export function ScenarioPanel() {
           />
           checkMisleadsOnFail
         </label>
-        <div className="help">Um `check` falho dá uma leitura ENGANOSA da vigilância, em vez de “inconclusivo”.</div>
+        <div className="help">{t('Um `check` falho dá uma leitura ENGANOSA da vigilância, em vez de “inconclusivo”.', 'A failed `check` gives a MISLEADING surveillance reading instead of “inconclusive”.')}</div>
       </div>
 
       <details className="advanced">
-        <summary>Diálogo (query / ask)</summary>
+        <summary>{t('Diálogo (query / ask)', 'Dialog (query / ask)')}</summary>
         <p className="help">
-          Respostas do banco de dados conversacional — o que <code>query &lt;assunto&gt;</code> /
-          <code>ask</code> respondem (ex.: a MU/TH/UR no tema alien).
+          {t('Respostas do banco de dados conversacional — o que ', 'Conversational database answers — what ')}
+          <code>query &lt;{t('assunto', 'subject')}&gt;</code> / <code>ask</code>
+          {t(' respondem (ex.: a MU/TH/UR no tema alien).', ' reply (e.g. MU/TH/UR in the alien theme).')}
         </p>
         <DialogEditor />
       </details>
 
       <details className="advanced">
-        <summary>Eventos (ao desbloquear um arquivo)</summary>
+        <summary>{t('Eventos (ao desbloquear um arquivo)', 'Events (on unlocking a file)')}</summary>
         <p className="help">
-          Linhas que tocam logo após um arquivo ser desbloqueado — alarme, recado do vilão,
-          uma contagem regressiva (<code>countdown</code>).
+          {t('Linhas que tocam logo após um arquivo ser desbloqueado — alarme, recado do vilão, uma contagem regressiva (',
+            'Lines that play right after a file is unlocked — alarm, villain’s message, a countdown (')}
+          <code>countdown</code>).
         </p>
         <EventsEditor />
       </details>
 
       <details className="advanced">
-        <summary>Tracer / rastreador</summary>
+        <summary>{t('Tracer / rastreador', 'Tracer')}</summary>
         <p className="help">
-          O cronômetro de ICE/recon que um arquivo vigiado (<code>tracer: true</code>) arma.
+          {t('O cronômetro de ICE/recon que um arquivo vigiado (', 'The ICE/recon timer a watched file (')}
+          <code>tracer: true</code>{t(') arma.', ') arms.')}
         </p>
         <TracerEditor />
       </details>
 
       <details className="advanced">
-        <summary>Avançado (commands, aliases, locks, boot, selfDestruct, i18n…)</summary>
+        <summary>{t('Avançado (commands, aliases, locks, boot, selfDestruct, i18n…)', 'Advanced (commands, aliases, locks, boot, selfDestruct, i18n…)')}</summary>
         <p className="help">
-          Edição direta do restante do scenario.json. Tudo aqui é preservado no round-trip.
+          {t('Edição direta do restante do scenario.json. Tudo aqui é preservado no round-trip.',
+            'Direct edit of the rest of scenario.json. Everything here round-trips intact.')}
         </p>
         <textarea
           rows={16}

@@ -122,6 +122,11 @@ label {
 .toolbar .dot {
   color: var(--warn);
 }
+.toolbar .locale-toggle {
+  font-family: var(--mono);
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.5rem;
+}
 
 .main {
   display: grid;
