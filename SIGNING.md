@@ -20,8 +20,11 @@ scenario-forge é público/MIT, qualifica. Passos:
 
 ## macOS — pago (adiado)
 Exige conta **Apple Developer** (US$ 99/ano): certificado "Developer ID
-Application" + notarização. O `release.yml` já tem os ganchos de env
-(`APPLE_*`); preencha os secrets quando/se tiver a conta. Sem isso, fica sem assinar.
+Application" + notarização. Para ligar, **adicione** as env `APPLE_CERTIFICATE`,
+`APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`,
+`APPLE_PASSWORD`, `APPLE_TEAM_ID` (preenchidas) ao step de release. ⚠️ Não as
+deixe vazias — env de assinatura vazia faz o tauri tentar assinar com cert
+vazio e o build do macOS falha em `security import`. Sem assinar é o padrão atual.
 
 ## Linux
 AppImage/.deb não exigem assinatura para distribuição.
