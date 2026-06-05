@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useStore } from '../model/store'
 import { buildTree, type TreeNode } from '../model/vfs'
 import type { FileNode } from '../model/types'
@@ -6,23 +7,41 @@ import { promptText, confirmDialog } from '../ui/dialog'
 function Row({
   node,
   metaByPath,
-  onSelectFile
+  onSelectFile,
+  onMove
 }: {
   node: TreeNode
   metaByPath: Map<string, FileNode>
   onSelectFile: () => void
+  onMove: (fromPath: string, toDir: string) => void
 }) {
   const selectedPath = useStore((s) => s.selectedPath)
   const select = useStore((s) => s.select)
+  const [over, setOver] = useState(false)
 
   if (node.type === 'dir') {
     return (
       <li className="dir">
-        <div className="row">📁 {node.name}</div>
+        <div
+          className={`row ${over ? 'drop-over' : ''}`}
+          onDragOver={(e) => {
+            e.preventDefault()
+            setOver(true)
+          }}
+          onDragLeave={() => setOver(false)}
+          onDrop={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            setOver(false)
+            onMove(e.dataTransfer.getData('text/plain'), node.path)
+          }}
+        >
+          📁 {node.name}
+        </div>
         {node.children.length > 0 && (
           <ul>
             {node.children.map((c) => (
-              <Row key={c.path} node={c} metaByPath={metaByPath} onSelectFile={onSelectFile} />
+              <Row key={c.path} node={c} metaByPath={metaByPath} onSelectFile={onSelectFile} onMove={onMove} />
             ))}
           </ul>
         )}
@@ -36,6 +55,12 @@ function Row({
     <li>
       <div
         className={`row ${selectedPath === node.path ? 'active' : ''}`}
+        draggable
+        title="Arraste para mover de pasta"
+        onDragStart={(e) => {
+          e.dataTransfer.setData('text/plain', node.path)
+          e.dataTransfer.effectAllowed = 'move'
+        }}
         onClick={() => {
           select(node.path)
           onSelectFile()
@@ -67,6 +92,17 @@ export function FileTree({
 
   const exists = (path: string) => files.some((f) => f.path === path)
 
+  // Move um arquivo para outra pasta (arrastar-soltar). Não sobrescreve nem
+  // move pra própria pasta. Caminho é a verdade — renameFile cuida do resto.
+  const move = (fromPath: string, toDir: string) => {
+    if (!fromPath) return
+    const name = fromPath.split('/').pop()
+    if (!name) return
+    const newPath = (toDir === '/' ? '' : toDir) + '/' + name
+    if (newPath === fromPath || exists(newPath)) return
+    renameFile(fromPath, newPath)
+  }
+
   const promptNew = async (locked: boolean) => {
     const p = await promptText({
       title: locked ? 'Novo arquivo bloqueado' : 'Novo arquivo',
@@ -88,10 +124,7 @@ export function FileTree({
   return (
     <div className="col tree">
       <p className="col-title">Cenário · {scenarioId}</p>
-      <button
-        className={`scenario-item ${selectedPath === null ? '' : ''}`}
-        onClick={onShowScenario}
-      >
+      <button className="scenario-item" onClick={onShowScenario}>
         ⚙ scenario.json
       </button>
 
@@ -134,9 +167,17 @@ export function FileTree({
       {files.length === 0 ? (
         <p className="muted">Nenhum arquivo. Crie o primeiro acima.</p>
       ) : (
-        <ul className="tree">
+        <ul
+          className="tree"
+          title="Arraste um arquivo para uma pasta (ou para o vazio = raiz)"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault()
+            move(e.dataTransfer.getData('text/plain'), '/')
+          }}
+        >
           {tree.children.map((c) => (
-            <Row key={c.path} node={c} metaByPath={metaByPath} onSelectFile={onSelectFile} />
+            <Row key={c.path} node={c} metaByPath={metaByPath} onSelectFile={onSelectFile} onMove={move} />
           ))}
         </ul>
       )}

@@ -198,6 +198,14 @@ ul.tree > li > .row {
   background: var(--accent-soft);
   color: var(--accent);
 }
+.tree .row[draggable='true'] {
+  cursor: grab;
+}
+.tree .row.drop-over {
+  outline: 1px dashed var(--accent);
+  outline-offset: -1px;
+  background: var(--accent-soft);
+}
 .tree .row .lock {
   color: var(--warn);
   font-size: 0.75rem;
