@@ -17,12 +17,18 @@ import { normalizeVfsPath } from './vfs'
 
 export type EditLang = 'base' | string
 
+/** UI language of the editor itself (not the scenario's content languages). */
+export type Locale = 'pt' | 'en'
+
 interface State {
   project: Project
   selectedPath: string | null
   /** 'base' edits files[].content + flags; a lang code edits a translated body. */
   lang: EditLang
   dirty: boolean
+  /** Editor UI language. */
+  locale: Locale
+  setLocale: (locale: Locale) => void
 
   loadProject: (p: Project) => void
   newProject: (theme?: SystemId) => void
@@ -55,6 +61,8 @@ export const useStore = create<State>()(
   selectedPath: null,
   lang: 'base',
   dirty: false,
+  locale: 'pt',
+  setLocale: (locale) => set({ locale }),
 
   loadProject: (p) => set({ project: p, selectedPath: null, lang: 'base', dirty: false }),
   newProject: (theme) =>
@@ -193,7 +201,8 @@ export const useStore = create<State>()(
         project: s.project,
         selectedPath: s.selectedPath,
         lang: s.lang,
-        dirty: s.dirty
+        dirty: s.dirty,
+        locale: s.locale
       })
     }
   )

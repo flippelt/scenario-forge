@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useDialog } from './dialog'
+import { useT } from '../i18n'
 
 // Renders the single active dialog. Enter submits, Esc cancels; the prompt
 // input autofocuses and runs the optional validator before resolving.
 export function Dialogs() {
+  const t = useT()
   const current = useDialog((s) => s.current)
   const [value, setValue] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -73,7 +75,7 @@ export function Dialogs() {
         )}
         <div className="dialog-actions">
           {current.kind !== 'alert' && (
-            <button onClick={cancel}>{current.cancelLabel ?? 'Cancelar'}</button>
+            <button onClick={cancel}>{current.cancelLabel ?? t('Cancelar', 'Cancel')}</button>
           )}
           <button className="primary" onClick={submit}>
             {current.okLabel ?? 'OK'}

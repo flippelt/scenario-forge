@@ -133,7 +133,7 @@ describe('validation', () => {
       translations: {}
     }
     const issues = validateProject(p)
-    expect(issues.some((i) => i.message.includes('tracer'))).toBe(true)
+    expect(issues.some((i) => i.message.pt.includes('tracer'))).toBe(true)
   })
 
   it('errors on a locked file nobody can open', () => {
