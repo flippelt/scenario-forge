@@ -4,6 +4,7 @@
 // here so the editor edits either the base file or a translated body.
 
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import type {
   Project,
   ScenarioMeta,
@@ -47,7 +48,9 @@ interface State {
 const sortFiles = (files: FileNode[]) =>
   [...files].sort((a, b) => a.path.localeCompare(b.path))
 
-export const useStore = create<State>((set, get) => ({
+export const useStore = create<State>()(
+  persist(
+    (set, get) => ({
   project: emptyProject(),
   selectedPath: null,
   lang: 'base',
@@ -181,4 +184,17 @@ export const useStore = create<State>((set, get) => ({
         })
       }
     }))
-}))
+    }),
+    {
+      // Autosave: persiste o cenário em edição (e onde você estava) para
+      // sobreviver a fechar/reabrir o app. "Novo" limpa; "Salvar" zera o dirty.
+      name: 'scenario-forge.draft',
+      partialize: (s) => ({
+        project: s.project,
+        selectedPath: s.selectedPath,
+        lang: s.lang,
+        dirty: s.dirty
+      })
+    }
+  )
+)
