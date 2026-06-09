@@ -15,6 +15,14 @@ function fromText(t: string): string | string[] | undefined {
   return lines.length > 1 ? lines : lines[0]
 }
 
+// `match` é editado como texto separado por `;`. Enquanto o usuário digita,
+// dividimos SEM trim — senão o espaço final é cortado a cada tecla e palavras
+// de uma frase colam ("self destruct" vira "selfdestruct"). A normalização
+// (trim + remover vazios) acontece só no blur.
+export const splitMatchInput = (raw: string): string[] => raw.split(';')
+export const normalizeMatch = (arr: string[]): string[] =>
+  arr.map((s) => s.trim()).filter(Boolean)
+
 export function DialogEditor() {
   const t = useT()
   const dialog = (useStore((s) => s.project.meta.dialog) ?? EMPTY_DIALOG) as Dialog
@@ -119,8 +127,8 @@ export function DialogEditor() {
             type="text"
             value={(r.match ?? []).join('; ')}
             placeholder={t('nostromo; o que houve, exatamente?; autodestruição', 'nostromo; what happened, exactly?; self-destruct')}
-            onChange={(e) => patchResponse(i, { match: e.target.value.split(';').map((s) => s.trim()) })}
-            onBlur={() => patchResponse(i, { match: (r.match ?? []).filter(Boolean) })}
+            onChange={(e) => patchResponse(i, { match: splitMatchInput(e.target.value) })}
+            onBlur={() => patchResponse(i, { match: normalizeMatch(r.match ?? []) })}
           />
           <div className="help">
             {t('Casa quando a query do jogador ', 'Matches when the player query ')}
