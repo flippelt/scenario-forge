@@ -1,5 +1,7 @@
 # scenario-forge
 
+[![Last commit](https://img.shields.io/github/last-commit/flippelt/scenario-forge)](https://github.com/flippelt/scenario-forge/commits)
+
 Editor desktop (Windows · macOS · Linux) para criar cenários do
 [Immersive Terminal for RPGs](https://github.com/flippelt/Immersive-Terminal-for-RPGs):
 monta a árvore de `.md`/`.dat`, configura os flags de jogo
