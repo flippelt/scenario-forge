@@ -8,10 +8,9 @@ monta a árvore de `.md`/`.dat`, configura os flags de jogo
 (crackable, tracer, locked, dificuldade…) por formulário e exporta a pasta
 versionável **e** o JSON carregável em runtime.
 
-> **Status:** Fases 1–3 implementadas — árvore de arquivos, editores md/dat,
-> painel de flags, formulários do `scenario.json` (incl. **diálogo** e **eventos**),
-> validação, export/import (pasta · bundle · link), **preview ao vivo** (postMessage)
-> e **templates** por sistema. Resta só polish opcional. Veja [PLANNING.md](./PLANNING.md).
+> **Status:** Fases 1–3 + polish. Preview **in-process** (mesmo `rpgterm-engine`
+> do editor, casca CRT via `rpg-prop-kit`). O terminal publicado da Pages é só
+> um atalho, com aviso se o pin do engine divergir. Veja [PLANNING.md](./PLANNING.md).
 
 ## Stack
 - **Tauri 2** (Rust) + **React + Vite + TypeScript**
@@ -56,8 +55,13 @@ npm run build
   flag no arquivo errado, tradução órfã…).
 - **Export**: pasta versionável (desktop) e bundle JSON (desktop/web).
   **Import**: bundle ou **link/token** (`?scenario64=`).
-- **▶ Preview ao vivo**: embute o terminal real e envia o cenário por **postMessage**
-  — crackar/decifrar/tracer no editor, sem limite de tamanho.
+- **▶ Preview ao vivo**: terminal **local** (`rpgterm-engine` + `rpg-prop-kit`).
+  Crack/unlock/decrypt/query rodam no pin do editor, não na Pages.
+  Atalho para o ITR publicado, com selo de deriva de versão.
+- **Tubo CRT**: `shortName` e knobs (`scanlines`, `flicker`, `curve`, `bloom`,
+  bezel/LED/plate) no formulário, não só no JSON avançado.
+- **Cmd+S**, desfazer/refazer (Cmd+Z), **Salvar na mesa** (pasta
+  `rpgterm/src/themes/scenarios/<tema>/<id>`).
 
 ## Distribuição
 `npm run tauri build` gera os instaladores em `src-tauri/target/release/bundle/`
@@ -67,4 +71,4 @@ ora — veja [SIGNING.md](./SIGNING.md).
 
 ## Próximos passos
 Roadmap em fases no [PLANNING.md](./PLANNING.md#8-roadmap-em-fases).
-Resta polish opcional (arrastar/soltar na árvore, mais atalhos de teclado).
+Próximo: cadastro SignPath (Windows grátis) e, se um dia valer, updater/notarização Mac.

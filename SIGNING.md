@@ -11,12 +11,29 @@ scenario-forge é público/MIT, qualifica. Passos:
 
 1. Cadastrar o projeto no programa **SignPath Foundation** (aprovação manual).
 2. Criar um *signing policy* + *project* no painel do SignPath e ligar ao repo.
-3. Adicionar os secrets no GitHub (`SIGNPATH_API_TOKEN`, organization/project/policy IDs).
-4. No `release.yml`, após o build do Windows, adicionar o passo
-   [`signpath/github-action-submit-signing-request`](https://github.com/signpath/github-action-submit-signing-request)
-   apontando para o artefato `.exe`/`.msi`.
+3. Adicionar os secrets no GitHub:
+   `SIGNPATH_API_TOKEN`, `SIGNPATH_ORGANIZATION_ID`,
+   `SIGNPATH_PROJECT_SLUG`, `SIGNPATH_POLICY_SLUG`.
+4. No `release.yml`, **depois** do `tauri-apps/tauri-action`, acrescentar
+   (só Windows, e só se o token existir — o release sem secrets continua
+   não-assinado):
 
-> Enquanto o cadastro não sai, o build Windows continua não-assinado (sem quebrar nada).
+```yaml
+- name: Submit Windows artifact to SignPath
+  if: matrix.platform == 'windows-latest' && secrets.SIGNPATH_API_TOKEN != ''
+  uses: signpath/github-action-submit-signing-request@v1
+  with:
+    api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+    organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
+    project-slug: ${{ secrets.SIGNPATH_PROJECT_SLUG }}
+    signing-policy-slug: ${{ secrets.SIGNPATH_POLICY_SLUG }}
+    github-artifact-id: <id do artefato .msi/.exe do tauri-action>
+    wait-for-completion: true
+```
+
+> O passo **não** está ligado no workflow de propósito: sem o cadastro no
+> SignPath um `github-artifact-id` inventado quebraria o release Windows.
+> Enquanto o cadastro não sai, o build continua não-assinado.
 
 ## macOS — pago (adiado)
 Exige conta **Apple Developer** (US$ 99/ano): certificado "Developer ID

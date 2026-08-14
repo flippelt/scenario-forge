@@ -6,11 +6,10 @@
 > **testa no terminal real embutido**, e exporta a pasta versionável **e** o
 > JSON carregável em runtime.
 
-**Status:** Fases 0–3 implementadas — scaffold Tauri+React+TS; modelo de
-dados fiel ao engine (consumido do pacote `rpgterm-engine` no npm); editores
-md/dat; painel de flags; validação; export/import; **preview ao vivo** (iframe
-do terminal real); templates; CI multiplataforma; teste de paridade contra o
-engine real. Resta polish opcional (arrastar na árvore, atalhos, assinatura).
+**Status:** Fases 0–3 + polish de 2026-08 implementados. Preview **in-process**
+(`rpgterm-engine` + `rpg-prop-kit`); formulário CRT/`shortName`; aviso de deriva
+de versão; Cmd+S / desfazer; salvar na pasta da mesa. Assinatura Windows =
+SignPath (cadastro manual, ver `SIGNING.md`).
 
 ---
 
@@ -30,8 +29,9 @@ engine real. Resta polish opcional (arrastar na árvore, atalhos, assinatura).
 
 - **Tauri 2**: shell nativo; backend **Rust** apenas para o que precisa do SO —
   ler/gravar pastas de cenário, diálogos abrir/salvar, exportar, (futuro) updater.
-- **Front React + Vite**: reaproveita `rpg-prop-kit` (UI CRT) e o **engine do
-  terminal** (ver §6) para o preview.
+- **Front React + Vite**: preview in-process com `rpg-prop-kit` (`CRTScreen`) e
+  o **engine do terminal** (`rpgterm-engine`). O iframe da Pages ficou só no
+  atalho “abrir terminal publicado”.
 - **Store em memória** = a verdade do cenário; serializadores convertem para os
   3 formatos (pasta repo ⇄ VFS runtime ⇄ JSON único).
 
@@ -138,4 +138,5 @@ real sem duplicar código (e consistente com a extração já feita do `rpg-prop
 - **Fase 1** ✅ — Modelo de dados (fiel ao engine) + árvore + editores md/dat + painel de flags + scenario.json + validação + export/import + testes de round-trip.
 - **Fase 2** ✅ — Preview ao vivo (engine embutido via `rpgterm-engine` + postMessage).
 - **Fase 3** ✅ — Templates, import (pasta/bundle/link), diálogo/eventos, release com binários.
-- **Depois** — polish: arrastar/soltar na árvore, atalhos, assinatura (`SIGNING.md`), Tauri updater. Manter o pin de `rpgterm-engine` no mesmo minor do ITR.
+- **Depois** — SignPath Windows depois do cadastro Foundation; Tauri updater;
+  notarização Mac (pago). Manter o pin de `rpgterm-engine` no mesmo minor do ITR.

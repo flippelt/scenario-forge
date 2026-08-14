@@ -5,11 +5,25 @@ import { SYSTEMS, type ScenarioMeta } from '../model/types'
 import { DialogEditor } from './DialogEditor'
 import { EventsEditor } from './EventsEditor'
 import { TracerEditor } from './TracerEditor'
+import { CrtEditor } from './CrtEditor'
 
 // Friendly fields get forms; everything else round-trips through an advanced
 // JSON editor so nothing in scenario.json is ever lost. `dialog` has its own
 // form (DialogEditor), so it's friendly too.
-const FRIENDLY_KEYS = ['id', 'name', 'header', 'prompt', 'user', 'motd', 'checkMisleadsOnFail', 'dialog', 'events', 'tracer']
+const FRIENDLY_KEYS = [
+  'id',
+  'name',
+  'header',
+  'prompt',
+  'user',
+  'shortName',
+  'crt',
+  'motd',
+  'checkMisleadsOnFail',
+  'dialog',
+  'events',
+  'tracer'
+]
 
 function advancedOf(meta: ScenarioMeta): Record<string, unknown> {
   const out: Record<string, unknown> = {}
@@ -123,6 +137,17 @@ export function ScenarioPanel() {
         </label>
         <div className="help">{t('Um `check` falho dá uma leitura ENGANOSA da vigilância, em vez de “inconclusivo”.', 'A failed `check` gives a MISLEADING surveillance reading instead of “inconclusive”.')}</div>
       </div>
+
+      <details className="advanced">
+        <summary>{t('Tubo CRT (shortName + knobs)', 'CRT tube (shortName + knobs)')}</summary>
+        <p className="help">
+          {t(
+            'Perfil visual do engine 0.2.1. Vazio herda o tema. O preview in-process lê estes valores.',
+            'Engine 0.2.1 visual profile. Empty inherits the theme. The in-process preview reads these values.'
+          )}
+        </p>
+        <CrtEditor />
+      </details>
 
       <details className="advanced">
         <summary>{t('Diálogo (query / ask)', 'Dialog (query / ask)')}</summary>

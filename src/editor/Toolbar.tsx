@@ -1,14 +1,18 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../model/store'
 import { useT } from '../i18n'
 import {
   isTauri,
   openScenarioFolder,
   saveScenarioFolder,
+  saveScenarioToMesa,
+  pickMesaRoot,
   exportRuntimeBundle,
   importRuntimeBundleText,
   importShareLink
 } from '../fs/adapter'
+import { VersionBadge } from '../preview/PreviewPanel'
+import { ENGINE_VERSION, compareVersions, fetchPublishedEngineVersion } from '../preview/engineVersion'
 import { promptText, confirmDialog, alertDialog } from '../ui/dialog'
 
 export function Toolbar({
@@ -31,7 +35,22 @@ export function Toolbar({
   const markSaved = useStore((s) => s.markSaved)
   const locale = useStore((s) => s.locale)
   const setLocale = useStore((s) => s.setLocale)
+  const mesaRoot = useStore((s) => s.mesaRoot)
+  const setMesaRoot = useStore((s) => s.setMesaRoot)
+  const undo = useStore((s) => s.undo)
+  const redo = useStore((s) => s.redo)
+  const undoStack = useStore((s) => s.undoStack)
+  const redoStack = useStore((s) => s.redoStack)
   const fileInput = useRef<HTMLInputElement>(null)
+  const [engineReport, setEngineReport] = useState(() => compareVersions(ENGINE_VERSION, null))
+
+  useEffect(() => {
+    const ac = new AbortController()
+    fetchPublishedEngineVersion(ac.signal).then((published) => {
+      setEngineReport(compareVersions(ENGINE_VERSION, published))
+    })
+    return () => ac.abort()
+  }, [])
 
   const tauri = isTauri()
   const langs = Object.keys(project.translations)
@@ -108,11 +127,38 @@ export function Toolbar({
     if (code) addLang(code.trim())
   }
 
+  const handleMesa = async () => {
+    try {
+      let root = mesaRoot
+      if (!root) {
+        root = await pickMesaRoot()
+        if (!root) return
+        setMesaRoot(root)
+      }
+      const dir = await saveScenarioToMesa(project, root)
+      markSaved(dir)
+    } catch (e) {
+      alertDialog({ title: t('Erro ao salvar na mesa', 'Save-to-table error'), message: e instanceof Error ? e.message : String(e) })
+    }
+  }
+
+  const handlePickMesa = async () => {
+    try {
+      const root = await pickMesaRoot()
+      if (root) setMesaRoot(root)
+    } catch (e) {
+      alertDialog({ title: t('Erro', 'Error'), message: e instanceof Error ? e.message : String(e) })
+    }
+  }
+
   // Ctrl/Cmd+S → salvar pasta (desktop) ou exportar bundle (web).
+  // Ctrl/Cmd+Z / Shift+Z → undo/redo, unless the event came from a field
+  // (those keep native text undo).
   const projectRef = useRef(project)
   projectRef.current = project
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const field = e.target instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault()
         const p = projectRef.current
@@ -125,12 +171,24 @@ export function Toolbar({
         } else {
           exportRuntimeBundle(p)
         }
+        return
+      }
+      if (field) return
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault()
+        if (e.shiftKey) redo()
+        else undo()
+        return
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault()
+        redo()
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tauri, markSaved])
+  }, [tauri, markSaved, undo, redo])
 
   const desktopOnly = tauri ? '' : t('Requer o app desktop', 'Requires the desktop app')
 
@@ -145,6 +203,26 @@ export function Toolbar({
       </button>
       <button className="primary" onClick={handleSave} disabled={!tauri} title={desktopOnly}>
         {t('Salvar pasta', 'Save folder')}
+      </button>
+      <button
+        onClick={handleMesa}
+        disabled={!tauri}
+        title={
+          mesaRoot
+            ? mesaRoot
+            : t('Escolhe rpgterm/src/themes/scenarios na primeira vez', 'Pick rpgterm/src/themes/scenarios the first time')
+        }
+      >
+        {t('Salvar na mesa', 'Save to table')}
+      </button>
+      <button onClick={handlePickMesa} disabled={!tauri} title={desktopOnly}>
+        {t('Pasta da mesa…', 'Table folder…')}
+      </button>
+      <button onClick={undo} disabled={undoStack.length === 0} title="Ctrl/Cmd+Z">
+        {t('Desfazer', 'Undo')}
+      </button>
+      <button onClick={redo} disabled={redoStack.length === 0} title="Ctrl/Cmd+Shift+Z">
+        {t('Refazer', 'Redo')}
       </button>
 
       <span className="sep" />
@@ -188,6 +266,7 @@ export function Toolbar({
       </select>
 
       <span className="spacer" />
+      <VersionBadge report={engineReport} />
       {dirty && <span className="dot" title={t('Alterações não salvas', 'Unsaved changes')}>●</span>}
       <button
         className="locale-toggle"
