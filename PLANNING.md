@@ -6,11 +6,11 @@
 > **testa no terminal real embutido**, e exporta a pasta versionável **e** o
 > JSON carregável em runtime.
 
-**Status:** Fases 0, 1 e 2 implementadas — scaffold Tauri+React+TS; modelo de
+**Status:** Fases 0–3 implementadas — scaffold Tauri+React+TS; modelo de
 dados fiel ao engine (consumido do pacote `rpgterm-engine` no npm); editores
 md/dat; painel de flags; validação; export/import; **preview ao vivo** (iframe
-do terminal real); CI multiplataforma; teste de paridade contra o engine real.
-Falta a Fase 3 (templates, import avançado, polish).
+do terminal real); templates; CI multiplataforma; teste de paridade contra o
+engine real. Resta polish opcional (arrastar na árvore, atalhos, assinatura).
 
 ---
 
@@ -134,7 +134,8 @@ real sem duplicar código (e consistente com a extração já feita do `rpg-prop
 ---
 
 ## 8. Roadmap em fases
-- **Fase 0** ✅ — Scaffold Tauri+React+TS + CI build nos 3 OS. (Extração do `rpgterm-engine` adiada para a Fase 2, onde o preview a exige.)
-- **Fase 1** ✅ — Modelo de dados (fiel ao engine) + árvore + editores md/dat + painel de flags + scenario.json + validação + export/import + testes de round-trip. Sem preview.
-- **Fase 2** — Preview ao vivo (engine embutido). Pré-requisito: extrair `rpgterm-engine`.
-- **Fase 3** — Import, templates, i18n avançado, polish, primeira release com binários.
+- **Fase 0** ✅ — Scaffold Tauri+React+TS + CI build nos 3 OS.
+- **Fase 1** ✅ — Modelo de dados (fiel ao engine) + árvore + editores md/dat + painel de flags + scenario.json + validação + export/import + testes de round-trip.
+- **Fase 2** ✅ — Preview ao vivo (engine embutido via `rpgterm-engine` + postMessage).
+- **Fase 3** ✅ — Templates, import (pasta/bundle/link), diálogo/eventos, release com binários.
+- **Depois** — polish: arrastar/soltar na árvore, atalhos, assinatura (`SIGNING.md`), Tauri updater. Manter o pin de `rpgterm-engine` no mesmo minor do ITR.
