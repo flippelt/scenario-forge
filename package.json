@@ -21,6 +21,7 @@
     "@tauri-apps/plugin-fs": "^2.2.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "rpg-prop-kit": "^0.1.0",
     "rpgterm-engine": "^0.2.1",
     "zustand": "^5.0.2"
   },

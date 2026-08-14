@@ -640,6 +640,100 @@ details.advanced > summary {
   height: 100%;
   background: #000;
 }
+
+.version-badge {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--fg-dim);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+}
+.version-badge--drift {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+.host {
+  min-height: 0;
+  height: 100%;
+}
+.host-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  font-family: var(--rpk-font, var(--mono));
+  color: var(--rpk-fg, var(--fg));
+}
+.host-plate {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--rpk-fg, #33ff33) 25%, transparent);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.host-short {
+  color: var(--rpk-accent, var(--accent));
+  font-weight: 700;
+}
+.host-header {
+  color: var(--rpk-muted, var(--fg-dim));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.host-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.6rem 0.75rem 1rem;
+}
+.host-line {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.35;
+}
+.host-line--muted {
+  color: var(--rpk-muted, var(--fg-dim));
+}
+.host-line--ok {
+  color: var(--rpk-accent, var(--accent));
+}
+.host-line--err {
+  color: var(--rpk-error, var(--err));
+}
+.host-prompt {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+.host-input {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  width: auto;
+}
+.host-input:focus {
+  outline: none;
+  border: 0;
+}
+.host-modal {
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--rpk-fg, #33ff33) 30%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: 28rem;
+}
 .ext-link {
   font-size: 0.85rem;
   border: 1px solid var(--line);

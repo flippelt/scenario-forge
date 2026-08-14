@@ -66,6 +66,8 @@ jobs:
             - **Linux**: `.AppImage` ou `.deb`
 
             > Builds não-assinados por enquanto: o SO pode avisar "editor não verificado".
+            > Windows: SignPath Foundation (grátis) — ver SIGNING.md; sem os
+            > secrets o job segue não-assinado de propósito.
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}

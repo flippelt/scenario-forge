@@ -66,6 +66,20 @@ export interface Dialog {
   responses?: DialogResponse[]
 }
 
+/** CRT cabinet knobs from rpgterm-engine 0.2.1. Numbers are 0–1 (or ~2 for bloom/curve). */
+export interface CrtKnobs {
+  glow?: string
+  typeSpeed?: number
+  scanlines?: number
+  flicker?: number
+  curve?: number
+  bloom?: number
+  bezel?: string
+  bezelHi?: string
+  led?: string
+  plate?: string
+}
+
 /** scenario.json. The editor forms touch a known subset; anything else
  *  round-trips verbatim via the index signature so nothing is lost. */
 export interface ScenarioMeta {
@@ -74,6 +88,8 @@ export interface ScenarioMeta {
   header?: string
   prompt?: string
   user?: string
+  shortName?: string
+  crt?: CrtKnobs
   boot?: Line[]
   motd?: string[]
   dialog?: Dialog | null

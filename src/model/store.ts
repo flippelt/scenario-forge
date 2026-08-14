@@ -4,7 +4,7 @@
 // here so the editor edits either the base file or a translated body.
 
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import type {
   Project,
   ScenarioMeta,
@@ -20,6 +20,8 @@ export type EditLang = 'base' | string
 /** UI language of the editor itself (not the scenario's content languages). */
 export type Locale = 'pt' | 'en'
 
+const HISTORY_CAP = 80
+
 interface State {
   project: Project
   selectedPath: string | null
@@ -29,6 +31,14 @@ interface State {
   /** Editor UI language. */
   locale: Locale
   setLocale: (locale: Locale) => void
+  /** Remembered rpgterm `src/themes/scenarios` folder (desktop). */
+  mesaRoot: string | null
+  setMesaRoot: (path: string | null) => void
+
+  undoStack: Project[]
+  redoStack: Project[]
+  undo: () => void
+  redo: () => void
 
   loadProject: (p: Project) => void
   newProject: (theme?: SystemId) => void
@@ -54,6 +64,15 @@ interface State {
 const sortFiles = (files: FileNode[]) =>
   [...files].sort((a, b) => a.path.localeCompare(b.path))
 
+function record(s: Pick<State, 'project' | 'undoStack'>, next: Partial<State>): Partial<State> {
+  if (!next.project) return next
+  return {
+    ...next,
+    undoStack: [...s.undoStack.slice(-(HISTORY_CAP - 1)), s.project],
+    redoStack: []
+  }
+}
+
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
@@ -63,32 +82,68 @@ export const useStore = create<State>()(
   dirty: false,
   locale: 'pt',
   setLocale: (locale) => set({ locale }),
+  mesaRoot: null,
+  setMesaRoot: (mesaRoot) => set({ mesaRoot }),
+  undoStack: [],
+  redoStack: [],
+  undo: () =>
+    set((s) => {
+      if (s.undoStack.length === 0) return {}
+      const prev = s.undoStack[s.undoStack.length - 1]
+      return {
+        project: prev,
+        dirty: true,
+        undoStack: s.undoStack.slice(0, -1),
+        redoStack: [...s.redoStack, s.project]
+      }
+    }),
+  redo: () =>
+    set((s) => {
+      if (s.redoStack.length === 0) return {}
+      const next = s.redoStack[s.redoStack.length - 1]
+      return {
+        project: next,
+        dirty: true,
+        redoStack: s.redoStack.slice(0, -1),
+        undoStack: [...s.undoStack, s.project]
+      }
+    }),
 
-  loadProject: (p) => set({ project: p, selectedPath: null, lang: 'base', dirty: false }),
+  loadProject: (p) =>
+    set({ project: p, selectedPath: null, lang: 'base', dirty: false, undoStack: [], redoStack: [] }),
   newProject: (theme) =>
-    set({ project: emptyProject(theme), selectedPath: null, lang: 'base', dirty: false }),
+    set({
+      project: emptyProject(theme),
+      selectedPath: null,
+      lang: 'base',
+      dirty: false,
+      undoStack: [],
+      redoStack: []
+    }),
   markSaved: (dirPath) =>
     set((s) => ({ project: { ...s.project, dirPath }, dirty: false })),
 
   setTheme: (theme) =>
-    set((s) => ({ project: { ...s.project, theme }, dirty: true })),
+    set((s) => record(s, { project: { ...s.project, theme }, dirty: true })),
   setMeta: (patch) =>
-    set((s) => ({ project: { ...s.project, meta: { ...s.project.meta, ...patch } }, dirty: true })),
+    set((s) =>
+      record(s, { project: { ...s.project, meta: { ...s.project.meta, ...patch } }, dirty: true })
+    ),
   replaceMeta: (meta) =>
-    set((s) => ({ project: { ...s.project, meta }, dirty: true })),
+    set((s) => record(s, { project: { ...s.project, meta }, dirty: true })),
 
   setLang: (lang) => set({ lang }),
   addLang: (lang) =>
     set((s) => {
       if (lang === 'base' || s.project.translations[lang]) return { lang }
-      return {
+      return record(s, {
         lang,
         dirty: true,
         project: {
           ...s.project,
           translations: { ...s.project.translations, [lang]: {} }
         }
-      }
+      })
     }),
 
   select: (path) => set({ selectedPath: path }),
@@ -98,12 +153,12 @@ export const useStore = create<State>()(
       const path = normalizeVfsPath(rawPath)
       if (s.project.files.some((f) => f.path === path)) return {}
       const node: FileNode = { path, content: '', meta: locked ? { locked: true } : {} }
-      return {
+      return record(s, {
         selectedPath: path,
         lang: 'base',
         dirty: true,
         project: { ...s.project, files: sortFiles([...s.project.files, node]) }
-      }
+      })
     }),
 
   renameFile: (oldPath, newPathRaw) =>
@@ -120,11 +175,11 @@ export const useStore = create<State>()(
           translations[lang] = { ...rest, [newPath]: body }
         }
       }
-      return {
+      return record(s, {
         dirty: true,
         selectedPath: s.selectedPath === oldPath ? newPath : s.selectedPath,
         project: { ...s.project, files: sortFiles(files), translations }
-      }
+      })
     }),
 
   deleteFile: (path) =>
@@ -136,7 +191,7 @@ export const useStore = create<State>()(
           translations[lang] = rest
         }
       }
-      return {
+      return record(s, {
         dirty: true,
         selectedPath: s.selectedPath === path ? null : s.selectedPath,
         project: {
@@ -144,65 +199,100 @@ export const useStore = create<State>()(
           files: s.project.files.filter((f) => f.path !== path),
           translations
         }
-      }
+      })
     }),
 
   setContent: (path, content) =>
     set((s) => {
       const { lang } = get()
       if (lang === 'base') {
-        return {
+        return record(s, {
           dirty: true,
           project: {
             ...s.project,
             files: s.project.files.map((f) => (f.path === path ? { ...f, content } : f))
           }
-        }
+        })
       }
       const byLang = { ...(s.project.translations[lang] ?? {}), [path]: content }
-      return {
+      return record(s, {
         dirty: true,
         project: {
           ...s.project,
           translations: { ...s.project.translations, [lang]: byLang }
         }
-      }
+      })
     }),
 
   setFlag: (path, key, value) =>
-    set((s) => ({
-      dirty: true,
-      project: {
-        ...s.project,
-        files: s.project.files.map((f) =>
-          f.path === path ? { ...f, meta: { ...f.meta, [key]: value } } : f
-        )
-      }
-    })),
+    set((s) =>
+      record(s, {
+        dirty: true,
+        project: {
+          ...s.project,
+          files: s.project.files.map((f) =>
+            f.path === path ? { ...f, meta: { ...f.meta, [key]: value } } : f
+          )
+        }
+      })
+    ),
 
   unsetFlag: (path, key) =>
-    set((s) => ({
-      dirty: true,
-      project: {
-        ...s.project,
-        files: s.project.files.map((f) => {
-          if (f.path !== path) return f
-          const { [key]: _drop, ...rest } = f.meta
-          return { ...f, meta: rest }
-        })
-      }
-    }))
+    set((s) =>
+      record(s, {
+        dirty: true,
+        project: {
+          ...s.project,
+          files: s.project.files.map((f) => {
+            if (f.path !== path) return f
+            const { [key]: _drop, ...rest } = f.meta
+            return { ...f, meta: rest }
+          })
+        }
+      })
+    )
     }),
     {
       // Autosave: persiste o cenário em edição (e onde você estava) para
       // sobreviver a fechar/reabrir o app. "Novo" limpa; "Salvar" zera o dirty.
+      // undo/redo stay in memory — they are huge and session-only.
       name: 'scenario-forge.draft',
+      storage: createJSONStorage(() => {
+        const mem: Record<string, string> = {}
+        const ls = typeof localStorage === 'undefined' ? null : localStorage
+        return {
+          getItem: (k) => {
+            try {
+              return ls?.getItem(k) ?? mem[k] ?? null
+            } catch {
+              return mem[k] ?? null
+            }
+          },
+          setItem: (k, v) => {
+            mem[k] = v
+            try {
+              ls?.setItem(k, v)
+            } catch {
+              /* jsdom / private mode */
+            }
+          },
+          removeItem: (k) => {
+            delete mem[k]
+            try {
+              ls?.removeItem(k)
+            } catch {
+              /* ignore */
+            }
+          }
+        }
+      }),
       partialize: (s) => ({
         project: s.project,
         selectedPath: s.selectedPath,
         lang: s.lang,
         dirty: s.dirty,
-        locale: s.locale
+        locale: s.locale,
+        mesaRoot: s.mesaRoot
       })
     }
   )

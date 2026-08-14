@@ -89,6 +89,34 @@ export async function saveScenarioFolder(project: Project): Promise<string | nul
   return scenarioDir
 }
 
+/** Remembered mesa root = rpgterm `src/themes/scenarios`. User picks it once. */
+export async function pickMesaRoot(): Promise<string | null> {
+  if (!isTauri()) throw new Error('A pasta da mesa requer o app desktop (Tauri).')
+  const { open } = await dialog()
+  const picked = await open({
+    directory: true,
+    multiple: false,
+    title: 'Pasta da mesa (rpgterm/src/themes/scenarios)'
+  })
+  if (!picked || typeof picked !== 'string') return null
+  return picked.replace(/\\/g, '/').replace(/\/+$/, '')
+}
+
+/** Write the current scenario under <mesaRoot>/<theme>/<id>/. */
+export async function saveScenarioToMesa(project: Project, mesaRoot: string): Promise<string> {
+  if (!isTauri()) throw new Error('Salvar na mesa requer o app desktop (Tauri).')
+  const { mkdir, writeTextFile, exists } = await fs()
+  const scenarioDir = join(mesaRoot.replace(/\\/g, '/').replace(/\/+$/, ''), project.theme, project.meta.id)
+  const { files } = toRepoFolder(project)
+  for (const [rel, content] of Object.entries(files)) {
+    const abs = join(scenarioDir, rel)
+    const dir = abs.split('/').slice(0, -1).join('/')
+    if (!(await exists(dir))) await mkdir(dir, { recursive: true })
+    await writeTextFile(abs, content)
+  }
+  return scenarioDir
+}
+
 /** Export the single runtime bundle JSON: a Save dialog under Tauri, a browser
  *  download on the web. */
 export async function exportRuntimeBundle(project: Project): Promise<void> {
