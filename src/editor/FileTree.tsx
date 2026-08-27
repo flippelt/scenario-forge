@@ -76,9 +76,11 @@ function Row({
 }
 
 export function FileTree({
+  locked = false,
   onShowScenario,
   onSelectFile
 }: {
+  locked?: boolean
   onShowScenario: () => void
   onSelectFile: () => void
 }) {
@@ -132,12 +134,13 @@ export function FileTree({
       </button>
 
       <div className="tree-actions">
-        <button onClick={() => promptNew(false)}>{t('+ arquivo', '+ file')}</button>
-        <button onClick={() => promptNew(true)}>+ 🔒 .dat</button>
+        <button disabled={locked} onClick={() => promptNew(false)}>{t('+ arquivo', '+ file')}</button>
+        <button disabled={locked} onClick={() => promptNew(true)}>+ 🔒 .dat</button>
       </div>
       {selectedPath && (
         <div className="tree-actions">
           <button
+            disabled={locked}
             onClick={async () => {
               const np = await promptText({
                 title: t('Renomear arquivo', 'Rename file'),
@@ -157,6 +160,7 @@ export function FileTree({
             {t('renomear', 'rename')}
           </button>
           <button
+            disabled={locked}
             onClick={async () => {
               if (await confirmDialog({ title: t('Excluir arquivo', 'Delete file'), message: t(`Excluir ${selectedPath}?`, `Delete ${selectedPath}?`), okLabel: t('Excluir', 'Delete'), cancelLabel: t('Cancelar', 'Cancel') }))
                 deleteFile(selectedPath)

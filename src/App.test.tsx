@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { render, cleanup } from '@testing-library/react'
+import { render, cleanup, fireEvent } from '@testing-library/react'
 import { App } from './App'
 
 afterEach(cleanup)
@@ -12,5 +12,13 @@ describe('App', () => {
   it('renders without crashing (no infinite render loop)', () => {
     const { getByText } = render(<App />)
     expect(getByText(/scenario-forge/)).toBeTruthy()
+  })
+
+  it('trava o cenário até Editar', () => {
+    const { getByRole, getAllByRole, container } = render(<App />)
+    fireEvent.click(getByRole('button', { name: /Travar|Lock/ }))
+    expect(container.querySelector('.lock-bar')).toBeTruthy()
+    fireEvent.click(getAllByRole('button', { name: /^Editar$|^Edit$/ })[0]!)
+    expect(container.querySelector('.lock-bar')).toBeNull()
   })
 })
