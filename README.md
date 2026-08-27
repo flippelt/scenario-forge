@@ -2,7 +2,7 @@
 
 [![Build](https://img.shields.io/github/actions/workflow/status/flippelt/scenario-forge/build.yml?label=build)](https://github.com/flippelt/scenario-forge/actions) [![Release](https://img.shields.io/github/v/release/flippelt/scenario-forge)](https://github.com/flippelt/scenario-forge/releases) ![Release date](https://img.shields.io/github/release-date/flippelt/scenario-forge) [![Last commit](https://img.shields.io/github/last-commit/flippelt/scenario-forge)](https://github.com/flippelt/scenario-forge/commits) [![License](https://img.shields.io/github/license/flippelt/scenario-forge)](https://github.com/flippelt/scenario-forge/blob/main/LICENSE) ![Top language](https://img.shields.io/github/languages/top/flippelt/scenario-forge) ![Repo size](https://img.shields.io/github/repo-size/flippelt/scenario-forge) ![Issues](https://img.shields.io/github/issues/flippelt/scenario-forge)
 
-Editor desktop (Windows · macOS · Linux) para criar cenários do
+Editor **web** (navegador) e desktop (Windows · macOS · Linux) para criar cenários do
 [Immersive Terminal for RPGs](https://github.com/flippelt/Immersive-Terminal-for-RPGs):
 monta a árvore de `.md`/`.dat`, configura os flags de jogo
 (crackable, tracer, locked, dificuldade…) por formulário e exporta a pasta
@@ -27,8 +27,9 @@ Pré-requisitos: **Node 22+** e (para o app desktop) o
 ```bash
 npm install
 
-# UI no navegador (sem Rust) — export/import só pelo bundle JSON
-npm run dev
+# editor no navegador (sem Rust) — bundle JSON, etapas, trava/Editar
+npm run web
+# (alias: npm run dev)
 
 # app desktop completo (requer Rust) — abrir/salvar pasta de cenário
 npm run tauri dev

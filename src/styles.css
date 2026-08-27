@@ -354,11 +354,52 @@ ul.tree > li > .row {
   font-family: var(--mono);
   margin-top: 0.3rem;
 }
-details.advanced > summary {
+details.advanced > summary,
+details.step-block > summary {
   cursor: pointer;
   color: var(--accent);
   font-family: var(--mono);
   margin: 0.5rem 0;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+details.step-block > summary::-webkit-details-marker {
+  display: none;
+}
+.step-n {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  display: inline-grid;
+  place-items: center;
+  font-size: 0.72rem;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.step-sep {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 0.85rem 0;
+}
+.inner-sep {
+  border: 0;
+  border-top: 1px dashed var(--line);
+  margin: 0.7rem 0;
+}
+.lock-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid var(--warn);
+  background: rgba(255, 207, 107, 0.08);
+  color: var(--warn);
+  font-size: 0.85rem;
 }
 
 /* ============================== Dialog editor ============================== */

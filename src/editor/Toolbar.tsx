@@ -16,10 +16,20 @@ import { ENGINE_VERSION, compareVersions, fetchPublishedEngineVersion } from '..
 import { promptText, confirmDialog, alertDialog } from '../ui/dialog'
 
 export function Toolbar({
+  locked,
+  onUnlock,
+  onLock,
+  onFresh,
+  onExisting,
   onShowScenario,
   onPreview,
   onTemplates
 }: {
+  locked: boolean
+  onUnlock: () => void
+  onLock: () => void
+  onFresh: () => void
+  onExisting: () => void
   onShowScenario: () => void
   onPreview: () => void
   onTemplates: () => void
@@ -61,6 +71,7 @@ export function Toolbar({
       const p = await openScenarioFolder()
       if (p) {
         loadProject(p)
+        onExisting()
         onShowScenario()
       }
     } catch (e) {
@@ -82,6 +93,7 @@ export function Toolbar({
     reader.onload = () => {
       try {
         loadProject(importRuntimeBundleText(String(reader.result)))
+        onExisting()
         onShowScenario()
       } catch (e) {
         alertDialog({ title: t('Bundle inválido', 'Invalid bundle'), message: e instanceof Error ? e.message : String(e) })
@@ -101,6 +113,7 @@ export function Toolbar({
     if (!input || !input.trim()) return
     try {
       loadProject(importShareLink(input))
+      onExisting()
       onShowScenario()
     } catch (e) {
       alertDialog({ title: t('Link inválido', 'Invalid link'), message: e instanceof Error ? e.message : String(e) })
@@ -108,8 +121,10 @@ export function Toolbar({
   }
 
   const handleNew = async () => {
-    if (!dirty || (await confirmDialog({ title: t('Novo cenário', 'New scenario'), message: t('Descartar alterações não salvas?', 'Discard unsaved changes?'), ...discard })))
+    if (!dirty || (await confirmDialog({ title: t('Novo cenário', 'New scenario'), message: t('Descartar alterações não salvas?', 'Discard unsaved changes?'), ...discard }))) {
       newProject()
+      onFresh()
+    }
   }
 
   const handleTemplates = async () => {
@@ -195,6 +210,16 @@ export function Toolbar({
   return (
     <div className="toolbar">
       <span className="brand">▒ scenario-forge</span>
+
+      {locked ? (
+        <button className="primary" type="button" onClick={onUnlock}>
+          {t('Editar', 'Edit')}
+        </button>
+      ) : (
+        <button type="button" onClick={onLock}>
+          {t('Travar', 'Lock')}
+        </button>
+      )}
 
       <button onClick={handleNew}>{t('Novo', 'New')}</button>
       <button onClick={handleTemplates}>{t('Templates', 'Templates')}</button>
