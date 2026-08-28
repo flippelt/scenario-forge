@@ -70,6 +70,19 @@ O workflow `pages.yml` publica em
 [flippelt.github.io/scenario-forge](https://flippelt.github.io/scenario-forge/)
 a cada push na `main`. Não há instalador desktop.
 
+## Família
+
+| Projeto | Papel |
+|---|---|
+| [Immersive Terminal](https://github.com/flippelt/Immersive-Terminal-for-RPGs) | terminal que carrega o que você exporta · [demo](https://flippelt.github.io/Immersive-Terminal-for-RPGs/) |
+| [rpgterm-engine](https://www.npmjs.com/package/rpgterm-engine) | motor npm (schema, VFS, crack/tracer) |
+| [rpg-prop-kit](https://www.npmjs.com/package/rpg-prop-kit) | casca CRT do preview |
+| [session-kit](https://github.com/flippelt/session-kit) | YAML de sessão → pasta de cenário |
+
+Flags e `scenario.json`: wiki do terminal —
+[Autoria: Cenários](https://github.com/flippelt/Immersive-Terminal-for-RPGs/wiki/Authoring-Scenarios)
+e [Arquivos Trancados](https://github.com/flippelt/Immersive-Terminal-for-RPGs/wiki/Locked-Files).
+
 ## Próximos passos
 Roadmap em [PLANNING.md](./PLANNING.md#8-roadmap-em-fases).
 Manter o pin de `rpgterm-engine` no mesmo minor do ITR.
