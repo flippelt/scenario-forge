@@ -1,6 +1,6 @@
 // Generates assets/icon.png (1024x1024) with no dependencies — a dark CRT tile
-// with a green prompt chevron + cursor, matching the ecosystem look. Run this,
-// then `npx tauri icon assets/icon.png` rasterizes every platform variant.
+// with a green prompt chevron + cursor, matching the ecosystem look. Favicons
+// in public/ are resized from this file (or from the last generated PNG).
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { deflateSync } from 'node:zlib'
 

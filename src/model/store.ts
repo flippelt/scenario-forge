@@ -31,7 +31,7 @@ interface State {
   /** Editor UI language. */
   locale: Locale
   setLocale: (locale: Locale) => void
-  /** Remembered rpgterm `src/themes/scenarios` folder (desktop). */
+  /** Remembered rpgterm `src/themes/scenarios` folder name (native picker). */
   mesaRoot: string | null
   setMesaRoot: (path: string | null) => void
 

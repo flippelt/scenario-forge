@@ -21,4 +21,13 @@ describe('App', () => {
     fireEvent.click(getAllByRole('button', { name: /^Editar$|^Edit$/ })[0]!)
     expect(container.querySelector('.lock-bar')).toBeNull()
   })
+
+  it('expõe abrir/salvar pasta sem exigir desktop', () => {
+    const { getByRole } = render(<App />)
+    expect((getByRole('button', { name: /Abrir pasta|Open folder/ }) as HTMLButtonElement).disabled).toBe(false)
+    expect(
+      (getByRole('button', { name: /Baixar pasta|Download folder|Salvar pasta|Save folder/ }) as HTMLButtonElement)
+        .disabled
+    ).toBe(false)
+  })
 })

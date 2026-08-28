@@ -113,7 +113,7 @@ export interface Project {
   files: FileNode[]
   /** Parallel translated bodies, keyed by lang then path. */
   translations: Translations
-  /** Absolute folder this was opened from (for "Save"); null if unsaved. */
+  /** Label of the last save target (folder name or zip); null if never saved. */
   dirPath: string | null
 }
 

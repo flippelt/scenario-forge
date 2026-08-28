@@ -80,10 +80,12 @@ export interface FolderExport {
   files: Record<string, string>
 }
 
-/** Produce the versionable folder layout (scenario.json + files trees). */
+/** Produce the versionable folder layout (scenario.json + files trees).
+ *  `theme` is written into scenario.json so a zip/folder picked in the browser
+ *  can recover it without the parent `scenarios/<theme>/` path. */
 export function toRepoFolder(p: Project): FolderExport {
   const out: Record<string, string> = {}
-  out['scenario.json'] = JSON.stringify(p.meta, null, 2) + '\n'
+  out['scenario.json'] = JSON.stringify({ ...p.meta, theme: p.theme }, null, 2) + '\n'
   for (const f of p.files) {
     out[`files/${rel(f.path)}`] = serializeFrontMatter(f.meta, f.content)
   }
@@ -96,19 +98,24 @@ export function toRepoFolder(p: Project): FolderExport {
 }
 
 /** Inverse of toRepoFolder. `entries` maps a relative path (scenario.json,
- *  files/…, files.<lang>/…) to its raw content; `theme` comes from the folder. */
+ *  files/…, files.<lang>/…) to its raw content. Theme comes from scenario.json
+ *  when present, otherwise `fallbackTheme` (parent folder name, or `ibm`). */
 export function fromRepoFolder(
   entries: Record<string, string>,
-  theme: SystemId
+  fallbackTheme: SystemId = 'ibm'
 ): Project {
   let meta: ScenarioMeta = { id: 'scenario' }
+  let jsonTheme: SystemId | undefined
   const files: FileNode[] = []
   const translations: Translations = {}
 
   for (const [path, content] of Object.entries(entries)) {
     if (path === 'scenario.json') {
       try {
-        meta = JSON.parse(content) as ScenarioMeta
+        const parsed = JSON.parse(content) as Record<string, unknown>
+        const { theme: rawTheme, ...rest } = parsed
+        jsonTheme = typeof rawTheme === 'string' && VALID_THEMES.has(rawTheme) ? (rawTheme as SystemId) : undefined
+        meta = rest as ScenarioMeta
       } catch {
         /* leave default; validation will flag a broken scenario.json */
       }
@@ -129,5 +136,5 @@ export function fromRepoFolder(
     }
   }
 
-  return { theme, meta, files, translations, dirPath: null }
+  return { theme: jsonTheme ?? fallbackTheme, meta, files, translations, dirPath: null }
 }

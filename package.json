@@ -1,9 +1,9 @@
 {
   "name": "scenario-forge",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.2.0",
   "type": "module",
-  "description": "Desktop editor for Immersive Terminal for RPGs scenarios",
+  "description": "Web editor for Immersive Terminal for RPGs scenarios",
   "license": "MIT",
   "scripts": {
     "dev": "vite",
@@ -13,13 +13,10 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "tauri": "tauri",
-    "icon": "tauri icon assets/icon.png"
+    "icon": "node scripts/gen-icon.mjs"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.1.1",
-    "@tauri-apps/plugin-dialog": "^2.2.0",
-    "@tauri-apps/plugin-fs": "^2.2.0",
+    "fflate": "^0.8.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "rpg-prop-kit": "^0.1.0",
@@ -27,7 +24,6 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.1.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.1.0",
     "@types/node": "^22.10.2",

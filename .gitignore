@@ -5,18 +5,9 @@ dist-ssr/
 *.local
 .vite/
 
-# Tauri / Rust
-src-tauri/target/
-# Generated at build time by tauri-build (regenerated on every build).
-src-tauri/gen/
-
 # OS / editor
 .DS_Store
 Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
-
-# Local build log
-tauri-build.log
-tauri-dev.log

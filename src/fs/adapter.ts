@@ -1,147 +1,79 @@
-// Filesystem boundary. Real folder I/O uses the Tauri fs + dialog plugins;
-// when running as a plain web app (dev without the Rust shell, or a browser
-// preview) it degrades to JSON-bundle download/upload. Tauri APIs are imported
-// dynamically so the web build never references a missing global.
+// Filesystem boundary for the web editor.
+// - Chromium: File System Access API (open/save a real folder, mesa root).
+// - All browsers: zip of the versionable folder + JSON runtime bundle.
+// - Fallback open: `<input webkitdirectory>` (Firefox/Safari).
 
 import { decodeBundle } from 'rpgterm-engine'
-import type { Project, SystemId } from '../model/types'
-import { SYSTEMS } from '../model/types'
+import type { Project } from '../model/types'
 import { fromRepoFolder, toRepoFolder, toRuntimeBundle, fromRuntimeBundle } from '../model/serialize'
+import { locateScenarioRoot, omitJunk, stripPrefix } from './folder'
+import { packZip, unpackZip } from './zip'
+import {
+  canPickDirectory,
+  ensurePermission,
+  idbDelHandle,
+  idbGetHandle,
+  idbPutHandle,
+  isAbort,
+  MESA_HANDLE_KEY,
+  readDirectoryTree,
+  SCENARIO_HANDLE_KEY,
+  writeDirectoryTree
+} from './fsa'
 
-export function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+export { canPickDirectory }
+
+let scenarioHandle: FileSystemDirectoryHandle | null = null
+let mesaHandle: FileSystemDirectoryHandle | null = null
+let restored = false
+
+async function restoreHandles(): Promise<void> {
+  if (restored) return
+  restored = true
+  scenarioHandle = await idbGetHandle(SCENARIO_HANDLE_KEY)
+  mesaHandle = await idbGetHandle(MESA_HANDLE_KEY)
 }
 
-const VALID = new Set<string>(SYSTEMS.map((s) => s.id))
-const join = (...parts: string[]) =>
-  parts.join('/').replace(/\\/g, '/').replace(/\/+/g, '/')
-
-// --- Tauri plugin handles (lazy) ------------------------------------------
-async function fs() {
-  return import('@tauri-apps/plugin-fs')
-}
-async function dialog() {
-  return import('@tauri-apps/plugin-dialog')
+export async function clearScenarioDir(): Promise<void> {
+  await restoreHandles()
+  scenarioHandle = null
+  await idbDelHandle(SCENARIO_HANDLE_KEY)
 }
 
-// Recursively collect files under a directory as { relPath -> text }, relative
-// to `root`. Only descends scenario.json + files/ + files.<lang>/.
-async function readTree(root: string): Promise<Record<string, string>> {
-  const { readDir, readTextFile } = await fs()
-  const out: Record<string, string> = {}
+async function bindScenarioDir(handle: FileSystemDirectoryHandle): Promise<void> {
+  scenarioHandle = handle
+  await idbPutHandle(SCENARIO_HANDLE_KEY, handle)
+}
 
-  const walk = async (abs: string, relBase: string) => {
-    const entries = await readDir(abs)
-    for (const e of entries) {
-      const absChild = join(abs, e.name)
-      const relChild = relBase ? `${relBase}/${e.name}` : e.name
-      if (e.isDirectory) {
-        await walk(absChild, relChild)
-      } else if (e.isFile) {
-        out[relChild] = await readTextFile(absChild)
-      }
-    }
+async function bindMesaDir(handle: FileSystemDirectoryHandle): Promise<void> {
+  mesaHandle = handle
+  await idbPutHandle(MESA_HANDLE_KEY, handle)
+}
+
+export function projectFromEntries(entries: Record<string, string>): Project {
+  const cleaned = omitJunk(entries)
+  const { prefix, theme } = locateScenarioRoot(Object.keys(cleaned))
+  return fromRepoFolder(stripPrefix(cleaned, prefix), theme ?? 'ibm')
+}
+
+export async function projectFromFileList(list: Iterable<File>): Promise<Project> {
+  const entries: Record<string, string> = {}
+  for (const file of list) {
+    const rel = (file.webkitRelativePath || file.name).replace(/\\/g, '/')
+    entries[rel] = await file.text()
   }
-
-  await walk(root, '')
-  return out
+  return projectFromEntries(entries)
 }
 
-/** Pick a scenario folder and load it. Theme is inferred from the parent
- *  folder name (scenarios/<theme>/<id>); falls back to `ibm` if unknown. */
-export async function openScenarioFolder(): Promise<Project | null> {
-  if (!isTauri()) throw new Error('Abrir pasta requer o app desktop (Tauri).')
-  const { open } = await dialog()
-  const picked = await open({ directory: true, multiple: false, title: 'Abrir pasta do cenário' })
-  if (!picked || typeof picked !== 'string') return null
-
-  const norm = picked.replace(/\\/g, '/').replace(/\/+$/, '')
-  const parent = norm.split('/').slice(-2, -1)[0] ?? ''
-  const theme: SystemId = VALID.has(parent) ? (parent as SystemId) : 'ibm'
-
-  const entries = await readTree(norm)
-  const project = fromRepoFolder(entries, theme)
-  project.dirPath = norm
-  return project
+export async function importRepoZip(data: Uint8Array): Promise<Project> {
+  return projectFromEntries(unpackZip(data))
 }
 
-/** Write the repo folder layout. With no target dir, prompts for a parent and
- *  writes under <theme>/<id>/. Returns the scenario dir written to. */
-export async function saveScenarioFolder(project: Project): Promise<string | null> {
-  if (!isTauri()) throw new Error('Salvar pasta requer o app desktop (Tauri).')
-  const { mkdir, writeTextFile, exists } = await fs()
-
-  let scenarioDir = project.dirPath
-  if (!scenarioDir) {
-    const { open } = await dialog()
-    const parent = await open({ directory: true, multiple: false, title: 'Escolha onde criar a pasta do cenário' })
-    if (!parent || typeof parent !== 'string') return null
-    scenarioDir = join(parent.replace(/\\/g, '/'), project.theme, project.meta.id)
-  }
-
-  const { files } = toRepoFolder(project)
-  for (const [rel, content] of Object.entries(files)) {
-    const abs = join(scenarioDir, rel)
-    const dir = abs.split('/').slice(0, -1).join('/')
-    if (!(await exists(dir))) await mkdir(dir, { recursive: true })
-    await writeTextFile(abs, content)
-  }
-  return scenarioDir
-}
-
-/** Remembered mesa root = rpgterm `src/themes/scenarios`. User picks it once. */
-export async function pickMesaRoot(): Promise<string | null> {
-  if (!isTauri()) throw new Error('A pasta da mesa requer o app desktop (Tauri).')
-  const { open } = await dialog()
-  const picked = await open({
-    directory: true,
-    multiple: false,
-    title: 'Pasta da mesa (rpgterm/src/themes/scenarios)'
-  })
-  if (!picked || typeof picked !== 'string') return null
-  return picked.replace(/\\/g, '/').replace(/\/+$/, '')
-}
-
-/** Write the current scenario under <mesaRoot>/<theme>/<id>/. */
-export async function saveScenarioToMesa(project: Project, mesaRoot: string): Promise<string> {
-  if (!isTauri()) throw new Error('Salvar na mesa requer o app desktop (Tauri).')
-  const { mkdir, writeTextFile, exists } = await fs()
-  const scenarioDir = join(mesaRoot.replace(/\\/g, '/').replace(/\/+$/, ''), project.theme, project.meta.id)
-  const { files } = toRepoFolder(project)
-  for (const [rel, content] of Object.entries(files)) {
-    const abs = join(scenarioDir, rel)
-    const dir = abs.split('/').slice(0, -1).join('/')
-    if (!(await exists(dir))) await mkdir(dir, { recursive: true })
-    await writeTextFile(abs, content)
-  }
-  return scenarioDir
-}
-
-/** Export the single runtime bundle JSON: a Save dialog under Tauri, a browser
- *  download on the web. */
-export async function exportRuntimeBundle(project: Project): Promise<void> {
-  const json = JSON.stringify(toRuntimeBundle(project), null, 2)
-  const filename = `${project.meta.id || 'scenario'}.json`
-
-  if (isTauri()) {
-    const { save } = await dialog()
-    const { writeTextFile } = await fs()
-    const target = await save({ defaultPath: filename, filters: [{ name: 'JSON', extensions: ['json'] }] })
-    if (target) await writeTextFile(target, json)
-    return
-  }
-  downloadText(filename, json, 'application/json')
-}
-
-/** Import a runtime bundle from pasted/loaded JSON text. */
 export function importRuntimeBundleText(text: string): Project {
   const parsed = JSON.parse(text) as Record<string, unknown>
   return fromRuntimeBundle(parsed)
 }
 
-/** Import from a terminal share link or raw token. Accepts a full URL with a
- *  `?scenario64=` param or a bare token; decodes with the engine's decodeBundle
- *  (same codec the terminal uses) and rebuilds the project. */
 export function importShareLink(input: string): Project {
   let token = input.trim()
   const m = token.match(/[?&]scenario64=([^&\s#]+)/)
@@ -151,8 +83,124 @@ export function importShareLink(input: string): Project {
   return fromRuntimeBundle(bundle)
 }
 
-function downloadText(filename: string, text: string, mime: string) {
-  const blob = new Blob([text], { type: mime })
+export type OpenFolderResult =
+  | { kind: 'project'; project: Project }
+  | { kind: 'abort' }
+  | { kind: 'input' }
+
+/** Native directory picker when available; otherwise the caller should fall
+ *  back to a hidden `<input webkitdirectory>`. */
+export async function openScenarioFolder(): Promise<OpenFolderResult> {
+  if (!canPickDirectory()) return { kind: 'input' }
+  try {
+    const handle = await window.showDirectoryPicker({ id: 'scenario-forge-open', mode: 'read' })
+    if (!(await ensurePermission(handle, 'read'))) return { kind: 'abort' }
+    const project = projectFromEntries(await readDirectoryTree(handle))
+    await bindScenarioDir(handle)
+    project.dirPath = handle.name
+    return { kind: 'project', project }
+  } catch (e) {
+    if (isAbort(e)) return { kind: 'abort' }
+    throw e
+  }
+}
+
+export type SaveResult = { label: string; downloaded: boolean; mesaName?: string } | null
+
+/** Write to the bound folder (or pick a parent and create `<theme>/<id>/`).
+ *  Browsers without the directory picker download a zip instead. */
+export async function saveScenarioFolder(project: Project): Promise<SaveResult> {
+  await restoreHandles()
+  const { files, suggestedDir } = toRepoFolder(project)
+
+  if (!canPickDirectory()) {
+    downloadBlob(`${project.meta.id || 'scenario'}.zip`, packZip(files), 'application/zip')
+    return { label: suggestedDir + '.zip', downloaded: true }
+  }
+
+  try {
+    if (scenarioHandle && (await ensurePermission(scenarioHandle, 'readwrite'))) {
+      await writeDirectoryTree(scenarioHandle, files)
+      return { label: scenarioHandle.name, downloaded: false }
+    }
+    const parent = await window.showDirectoryPicker({
+      id: 'scenario-forge-save',
+      mode: 'readwrite'
+    })
+    if (!(await ensurePermission(parent, 'readwrite'))) return null
+    const themeDir = await parent.getDirectoryHandle(project.theme, { create: true })
+    const scenarioDir = await themeDir.getDirectoryHandle(project.meta.id, { create: true })
+    await writeDirectoryTree(scenarioDir, files)
+    await bindScenarioDir(scenarioDir)
+    return { label: suggestedDir, downloaded: false }
+  } catch (e) {
+    if (isAbort(e)) return null
+    throw e
+  }
+}
+
+export function exportRepoZip(project: Project): void {
+  const { files } = toRepoFolder(project)
+  downloadBlob(`${project.meta.id || 'scenario'}.zip`, packZip(files), 'application/zip')
+}
+
+export async function exportRuntimeBundle(project: Project): Promise<void> {
+  const json = JSON.stringify(toRuntimeBundle(project), null, 2)
+  downloadBlob(`${project.meta.id || 'scenario'}.json`, json, 'application/json')
+}
+
+export async function pickMesaRoot(): Promise<string | null> {
+  if (!canPickDirectory()) return null
+  try {
+    const handle = await window.showDirectoryPicker({
+      id: 'scenario-forge-mesa',
+      mode: 'readwrite'
+    })
+    if (!(await ensurePermission(handle, 'readwrite'))) return null
+    await bindMesaDir(handle)
+    return handle.name
+  } catch (e) {
+    if (isAbort(e)) return null
+    throw e
+  }
+}
+
+/** Write under `<mesaRoot>/<theme>/<id>/` when a mesa folder is bound.
+ *  Otherwise downloads the versionable zip. */
+export async function saveScenarioToMesa(project: Project): Promise<SaveResult> {
+  await restoreHandles()
+  const { files, suggestedDir } = toRepoFolder(project)
+
+  if (!canPickDirectory()) {
+    downloadBlob(`${project.theme}-${project.meta.id || 'scenario'}.zip`, packZip(files), 'application/zip')
+    return { label: suggestedDir + '.zip', downloaded: true }
+  }
+
+  try {
+    let root = mesaHandle
+    if (!root || !(await ensurePermission(root, 'readwrite'))) {
+      const picked = await window.showDirectoryPicker({
+        id: 'scenario-forge-mesa',
+        mode: 'readwrite'
+      })
+      if (!(await ensurePermission(picked, 'readwrite'))) return null
+      await bindMesaDir(picked)
+      root = picked
+    }
+    if (!root) return null
+    const themeDir = await root.getDirectoryHandle(project.theme, { create: true })
+    const scenarioDir = await themeDir.getDirectoryHandle(project.meta.id, { create: true })
+    await writeDirectoryTree(scenarioDir, files)
+    await bindScenarioDir(scenarioDir)
+    return { label: suggestedDir, downloaded: false, mesaName: root.name }
+  } catch (e) {
+    if (isAbort(e)) return null
+    throw e
+  }
+}
+
+function downloadBlob(filename: string, data: string | Uint8Array, mime: string) {
+  const blob = new Blob([data as BlobPart], { type: mime })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
