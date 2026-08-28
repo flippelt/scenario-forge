@@ -2,14 +2,18 @@ import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../model/store'
 import { useT } from '../i18n'
 import {
-  isTauri,
+  canPickDirectory,
+  clearScenarioDir,
   openScenarioFolder,
   saveScenarioFolder,
   saveScenarioToMesa,
   pickMesaRoot,
   exportRuntimeBundle,
+  exportRepoZip,
   importRuntimeBundleText,
-  importShareLink
+  importRepoZip,
+  importShareLink,
+  projectFromFileList
 } from '../fs/adapter'
 import { VersionBadge } from '../preview/PreviewPanel'
 import { ENGINE_VERSION, compareVersions, fetchPublishedEngineVersion } from '../preview/engineVersion'
@@ -52,7 +56,9 @@ export function Toolbar({
   const undoStack = useStore((s) => s.undoStack)
   const redoStack = useStore((s) => s.redoStack)
   const fileInput = useRef<HTMLInputElement>(null)
+  const folderInput = useRef<HTMLInputElement>(null)
   const [engineReport, setEngineReport] = useState(() => compareVersions(ENGINE_VERSION, null))
+  const native = canPickDirectory()
 
   useEffect(() => {
     const ac = new AbortController()
@@ -62,44 +68,61 @@ export function Toolbar({
     return () => ac.abort()
   }, [])
 
-  const tauri = isTauri()
   const langs = Object.keys(project.translations)
   const discard = { okLabel: t('Descartar', 'Discard'), cancelLabel: t('Cancelar', 'Cancel') }
 
+  const adopt = (p: typeof project) => {
+    loadProject(p)
+    onExisting()
+    onShowScenario()
+  }
+
   const handleOpen = async () => {
     try {
-      const p = await openScenarioFolder()
-      if (p) {
-        loadProject(p)
-        onExisting()
-        onShowScenario()
+      const result = await openScenarioFolder()
+      if (result.kind === 'input') {
+        folderInput.current?.click()
+        return
       }
+      if (result.kind === 'project') adopt(result.project)
     } catch (e) {
       alertDialog({ title: t('Erro ao abrir', 'Open error'), message: e instanceof Error ? e.message : String(e) })
     }
   }
 
-  const handleSave = async () => {
+  const handleOpenFiles = async (list: FileList | File[]) => {
     try {
-      const dir = await saveScenarioFolder(project)
-      if (dir) markSaved(dir)
+      await clearScenarioDir()
+      adopt(await projectFromFileList(list))
+    } catch (e) {
+      alertDialog({ title: t('Erro ao abrir', 'Open error'), message: e instanceof Error ? e.message : String(e) })
+    }
+  }
+
+  const handleSave = async (p = project) => {
+    try {
+      const result = await saveScenarioFolder(p)
+      if (result) markSaved(result.label)
     } catch (e) {
       alertDialog({ title: t('Erro ao salvar', 'Save error'), message: e instanceof Error ? e.message : String(e) })
     }
   }
 
-  const handleImportFile = (file: File) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      try {
-        loadProject(importRuntimeBundleText(String(reader.result)))
-        onExisting()
-        onShowScenario()
-      } catch (e) {
-        alertDialog({ title: t('Bundle inválido', 'Invalid bundle'), message: e instanceof Error ? e.message : String(e) })
+  const handleImportFile = async (file: File) => {
+    try {
+      await clearScenarioDir()
+      const zip = /\.zip$/i.test(file.name) || /zip/.test(file.type)
+      if (zip) {
+        adopt(await importRepoZip(new Uint8Array(await file.arrayBuffer())))
+      } else {
+        adopt(importRuntimeBundleText(await file.text()))
       }
+    } catch (e) {
+      alertDialog({
+        title: t('Arquivo inválido', 'Invalid file'),
+        message: e instanceof Error ? e.message : String(e)
+      })
     }
-    reader.readAsText(file)
   }
 
   const handleImportLink = async () => {
@@ -112,9 +135,8 @@ export function Toolbar({
     })
     if (!input || !input.trim()) return
     try {
-      loadProject(importShareLink(input))
-      onExisting()
-      onShowScenario()
+      await clearScenarioDir()
+      adopt(importShareLink(input))
     } catch (e) {
       alertDialog({ title: t('Link inválido', 'Invalid link'), message: e instanceof Error ? e.message : String(e) })
     }
@@ -122,14 +144,17 @@ export function Toolbar({
 
   const handleNew = async () => {
     if (!dirty || (await confirmDialog({ title: t('Novo cenário', 'New scenario'), message: t('Descartar alterações não salvas?', 'Discard unsaved changes?'), ...discard }))) {
+      await clearScenarioDir()
       newProject()
       onFresh()
     }
   }
 
   const handleTemplates = async () => {
-    if (!dirty || (await confirmDialog({ title: t('Novo de template', 'New from template'), message: t('Descartar alterações não salvas?', 'Discard unsaved changes?'), ...discard })))
+    if (!dirty || (await confirmDialog({ title: t('Novo de template', 'New from template'), message: t('Descartar alterações não salvas?', 'Discard unsaved changes?'), ...discard }))) {
+      await clearScenarioDir()
       onTemplates()
+    }
   }
 
   const handleAddLang = async () => {
@@ -144,14 +169,19 @@ export function Toolbar({
 
   const handleMesa = async () => {
     try {
-      let root = mesaRoot
-      if (!root) {
-        root = await pickMesaRoot()
-        if (!root) return
-        setMesaRoot(root)
+      const result = await saveScenarioToMesa(project)
+      if (!result) return
+      markSaved(result.label)
+      if (result.mesaName) setMesaRoot(result.mesaName)
+      if (result.downloaded) {
+        alertDialog({
+          title: t('Pasta baixada', 'Folder downloaded'),
+          message: t(
+            `Extraia em rpgterm/src/themes/scenarios/${project.theme}/${project.meta.id}/`,
+            `Extract into rpgterm/src/themes/scenarios/${project.theme}/${project.meta.id}/`
+          )
+        })
       }
-      const dir = await saveScenarioToMesa(project, root)
-      markSaved(dir)
     } catch (e) {
       alertDialog({ title: t('Erro ao salvar na mesa', 'Save-to-table error'), message: e instanceof Error ? e.message : String(e) })
     }
@@ -161,14 +191,20 @@ export function Toolbar({
     try {
       const root = await pickMesaRoot()
       if (root) setMesaRoot(root)
+      else if (!native) {
+        alertDialog({
+          title: t('Pasta da mesa', 'Table folder'),
+          message: t(
+            'Escolher a pasta da mesa (gravação direta) precisa do Chrome ou Edge. Neste navegador use Baixar pasta (.zip) e extraia em rpgterm/src/themes/scenarios/.',
+            'Picking the table folder (direct write) needs Chrome or Edge. In this browser use Download folder (.zip) and extract into rpgterm/src/themes/scenarios/.'
+          )
+        })
+      }
     } catch (e) {
       alertDialog({ title: t('Erro', 'Error'), message: e instanceof Error ? e.message : String(e) })
     }
   }
 
-  // Ctrl/Cmd+S → salvar pasta (desktop) ou exportar bundle (web).
-  // Ctrl/Cmd+Z / Shift+Z → undo/redo, unless the event came from a field
-  // (those keep native text undo).
   const projectRef = useRef(project)
   projectRef.current = project
   useEffect(() => {
@@ -176,16 +212,7 @@ export function Toolbar({
       const field = e.target instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault()
-        const p = projectRef.current
-        if (tauri) {
-          saveScenarioFolder(p)
-            .then((dir) => dir && markSaved(dir))
-            .catch((err) =>
-              alertDialog({ title: t('Erro ao salvar', 'Save error'), message: err instanceof Error ? err.message : String(err) })
-            )
-        } else {
-          exportRuntimeBundle(p)
-        }
+        void handleSave(projectRef.current)
         return
       }
       if (field) return
@@ -202,10 +229,14 @@ export function Toolbar({
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
+    // handleSave is stable enough via projectRef; undo/redo/markSaved change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tauri, markSaved, undo, redo])
+  }, [markSaved, undo, redo])
 
-  const desktopOnly = tauri ? '' : t('Requer o app desktop', 'Requires the desktop app')
+  const saveLabel = native ? t('Salvar pasta', 'Save folder') : t('Baixar pasta (.zip)', 'Download folder (.zip)')
+  const mesaHint = native
+    ? mesaRoot || t('Escolhe rpgterm/src/themes/scenarios na primeira vez', 'Pick rpgterm/src/themes/scenarios the first time')
+    : t('Neste navegador baixa um .zip para extrair na pasta da mesa', 'In this browser downloads a .zip to extract into the table folder')
 
   return (
     <div className="toolbar">
@@ -221,52 +252,62 @@ export function Toolbar({
         </button>
       )}
 
-      <button onClick={handleNew}>{t('Novo', 'New')}</button>
-      <button onClick={handleTemplates}>{t('Templates', 'Templates')}</button>
-      <button onClick={handleOpen} disabled={!tauri} title={desktopOnly}>
-        {t('Abrir pasta', 'Open folder')}
+      <button type="button" onClick={() => void handleNew()}>{t('Novo', 'New')}</button>
+      <button type="button" onClick={() => void handleTemplates()}>{t('Templates', 'Templates')}</button>
+      <button type="button" onClick={() => void handleOpen()}>{t('Abrir pasta', 'Open folder')}</button>
+      <button className="primary" type="button" onClick={() => void handleSave()} title="Ctrl/Cmd+S">
+        {saveLabel}
       </button>
-      <button className="primary" onClick={handleSave} disabled={!tauri} title={desktopOnly}>
-        {t('Salvar pasta', 'Save folder')}
-      </button>
-      <button
-        onClick={handleMesa}
-        disabled={!tauri}
-        title={
-          mesaRoot
-            ? mesaRoot
-            : t('Escolhe rpgterm/src/themes/scenarios na primeira vez', 'Pick rpgterm/src/themes/scenarios the first time')
-        }
-      >
+      <button type="button" onClick={() => void handleMesa()} title={mesaHint}>
         {t('Salvar na mesa', 'Save to table')}
       </button>
-      <button onClick={handlePickMesa} disabled={!tauri} title={desktopOnly}>
+      <button
+        type="button"
+        onClick={() => void handlePickMesa()}
+        title={t('Pasta da mesa (rpgterm/src/themes/scenarios)', 'Table folder (rpgterm/src/themes/scenarios)')}
+      >
         {t('Pasta da mesa…', 'Table folder…')}
       </button>
-      <button onClick={undo} disabled={undoStack.length === 0} title="Ctrl/Cmd+Z">
+      <button type="button" onClick={undo} disabled={undoStack.length === 0} title="Ctrl/Cmd+Z">
         {t('Desfazer', 'Undo')}
       </button>
-      <button onClick={redo} disabled={redoStack.length === 0} title="Ctrl/Cmd+Shift+Z">
+      <button type="button" onClick={redo} disabled={redoStack.length === 0} title="Ctrl/Cmd+Shift+Z">
         {t('Refazer', 'Redo')}
       </button>
 
       <span className="sep" />
 
-      <button onClick={() => exportRuntimeBundle(project)}>{t('Exportar bundle', 'Export bundle')}</button>
-      <button onClick={() => fileInput.current?.click()}>{t('Importar bundle', 'Import bundle')}</button>
-      <button onClick={handleImportLink}>{t('Importar link', 'Import link')}</button>
+      <button type="button" onClick={() => exportRuntimeBundle(project)}>{t('Exportar bundle', 'Export bundle')}</button>
+      {native && (
+        <button type="button" onClick={() => exportRepoZip(project)}>{t('Baixar pasta (.zip)', 'Download folder (.zip)')}</button>
+      )}
+      <button type="button" onClick={() => fileInput.current?.click()}>{t('Importar', 'Import')}</button>
+      <button type="button" onClick={() => void handleImportLink()}>{t('Importar link', 'Import link')}</button>
 
       <span className="sep" />
 
-      <button className="primary" onClick={onPreview}>▶ {t('Preview', 'Preview')}</button>
+      <button className="primary" type="button" onClick={onPreview}>▶ {t('Preview', 'Preview')}</button>
       <input
         ref={fileInput}
         type="file"
-        accept="application/json,.json"
+        accept="application/json,.json,application/zip,.zip"
         style={{ display: 'none' }}
         onChange={(e) => {
           const f = e.target.files?.[0]
-          if (f) handleImportFile(f)
+          if (f) void handleImportFile(f)
+          e.target.value = ''
+        }}
+      />
+      <input
+        ref={folderInput}
+        type="file"
+        multiple
+        // @ts-expect-error non-standard directory picker, present in Chromium/Firefox/Safari
+        webkitdirectory=""
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          const list = e.target.files
+          if (list && list.length > 0) void handleOpenFiles(list)
           e.target.value = ''
         }}
       />
@@ -279,7 +320,7 @@ export function Toolbar({
         value={lang}
         style={{ width: 'auto' }}
         onChange={(e) => {
-          if (e.target.value === '__add') handleAddLang()
+          if (e.target.value === '__add') void handleAddLang()
           else setLang(e.target.value)
         }}
       >
@@ -295,12 +336,13 @@ export function Toolbar({
       {dirty && <span className="dot" title={t('Alterações não salvas', 'Unsaved changes')}>●</span>}
       <button
         className="locale-toggle"
+        type="button"
         title={t('Idioma do editor', 'Editor language')}
         onClick={() => setLocale(locale === 'pt' ? 'en' : 'pt')}
       >
         🌐 {locale.toUpperCase()}
       </button>
-      <span className="muted">{tauri ? 'desktop' : t('web (export/import só por bundle)', 'web (export/import via bundle only)')}</span>
+      <span className="muted">{native ? t('web · pasta nativa', 'web · native folder') : 'web'}</span>
     </div>
   )
 }

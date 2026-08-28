@@ -4,8 +4,8 @@
 // string), nested directories, every flag group, multiple translations, and a
 // scenario.json carrying tracer/dialog/events. If the editor's folder
 // serialization loses or mangles any of this, this test fails. This is the
-// guard for the desktop Open/Save-folder path (whose Tauri dialog half can't be
-// unit-tested, but whose serializer half is exactly this).
+// guard for Open/Save-folder (File System Access / zip); the picker itself
+// isn't unit-tested, but the serializer half is exactly this.
 
 import { describe, it, expect } from 'vitest'
 import { composeCustomScenario } from 'rpgterm-engine'
@@ -65,7 +65,11 @@ describe('repo-folder round-trip (Open/Save pasta)', () => {
     expect(files['files.pt/case.md']).toContain('(pt)')
     expect(files['files.en/case.md']).toContain('Arasaka Tower')
 
-    const back = fromRepoFolder(files, 'cprd')
+    const parsed = JSON.parse(files['scenario.json']) as { theme?: string; id?: string }
+    expect(parsed.theme).toBe('cprd')
+    const back = fromRepoFolder(files, 'ibm')
+    expect(back.theme).toBe('cprd')
+    expect(back.meta.theme).toBeUndefined()
     expect(back.files).toEqual(scenario.files)
     expect(back.translations).toEqual(scenario.translations)
     expect(back.meta).toEqual(scenario.meta)

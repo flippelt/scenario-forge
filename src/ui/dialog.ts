@@ -1,7 +1,7 @@
 // Promise-based in-app dialogs, a drop-in replacement for window.prompt /
-// confirm / alert — which the Tauri webview blocks. A single <Dialogs/> mounted
-// in App renders whatever request is active; the helpers below create a request
-// and resolve when the user acts, so callers just `await promptText(...)`.
+// confirm / alert. A single <Dialogs/> mounted in App renders whatever request
+// is active; the helpers below create a request and resolve when the user acts,
+// so callers just `await promptText(...)`.
 
 import { create } from 'zustand'
 

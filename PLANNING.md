@@ -1,15 +1,14 @@
 # scenario-forge — Planejamento
 
-> Editor desktop (Win/Mac/Linux) para autoria de cenários do **Immersive
-> Terminal for RPGs**: cria a árvore de `.md`/`.dat`, configura os
-> flags de jogo (crackable, tracer, locked, dificuldade…) por formulário,
-> **testa no terminal real embutido**, e exporta a pasta versionável **e** o
-> JSON carregável em runtime.
+> Editor **web** para autoria de cenários do **Immersive Terminal for RPGs**:
+> cria a árvore de `.md`/`.dat`, configura os flags de jogo (crackable, tracer,
+> locked, dificuldade…) por formulário, **testa no terminal real embutido**, e
+> exporta a pasta versionável **e** o JSON carregável em runtime.
 
-**Status:** Fases 0–3 + polish de 2026-08 implementados. Preview **in-process**
+**Status:** Fases 0–3 + polish + **web-only** (2026-08). Preview **in-process**
 (`rpgterm-engine` + `rpg-prop-kit`); formulário CRT/`shortName`; aviso de deriva
-de versão; Cmd+S / desfazer; salvar na pasta da mesa. Assinatura Windows =
-SignPath (cadastro manual, ver `SIGNING.md`).
+de versão; Cmd+S / desfazer; salvar na pasta da mesa via File System Access
+(Chrome/Edge) ou zip. Sem instalador Tauri.
 
 ---
 
@@ -17,33 +16,35 @@ SignPath (cadastro manual, ver `SIGNING.md`).
 
 | Decisão | Escolha |
 |---|---|
-| Stack | **Tauri 2** (Rust backend) + **React + Vite** (front) |
-| Saída | **Ambas**: pasta do repo (`scenario.json` + `files/` + `files.pt/`) **e** JSON runtime único |
+| Stack | **React + Vite** no navegador; GitHub Pages |
+| Pasta no disco | File System Access (Chromium) + zip / `webkitdirectory` (todos) |
+| Saída | **Ambas**: pasta do repo (`scenario.json` + `files/` + `files.<lang>/`) **e** JSON runtime único |
 | Preview | **Ao vivo** — terminal real embutido (crack/tracer/locked) |
-| Repositório | Novo, **público** |
-| Nome | `scenario-forge` (provisório, renomeável) |
+| Repositório | Público |
+| Nome | `scenario-forge` |
 
 ---
 
 ## 2. Arquitetura
 
-- **Tauri 2**: shell nativo; backend **Rust** apenas para o que precisa do SO —
-  ler/gravar pastas de cenário, diálogos abrir/salvar, exportar, (futuro) updater.
 - **Front React + Vite**: preview in-process com `rpg-prop-kit` (`CRTScreen`) e
   o **engine do terminal** (`rpgterm-engine`). O iframe da Pages ficou só no
   atalho “abrir terminal publicado”.
 - **Store em memória** = a verdade do cenário; serializadores convertem para os
-  3 formatos (pasta repo ⇄ VFS runtime ⇄ JSON único).
+  3 formatos (pasta repo ⇄ VFS runtime ⇄ JSON único). O rascunho persiste em
+  `localStorage`. Handles de pasta (FSA) ficam no IndexedDB.
+- **Sem shell nativo.** O backend Rust/Tauri saiu: o que precisava do SO
+  (abrir/gravar pasta) passou para a File System Access API + zip.
 
 ```
 scenario-forge/
-├─ src-tauri/        # Rust: comandos FS, empacotamento, updater
 ├─ src/
 │  ├─ model/         # tipos + (de)serializadores (pasta ⇄ runtime ⇄ store)
 │  ├─ editor/        # árvore de arquivos, editor .md, painel de flags, scenario.json
+│  ├─ fs/            # pasta nativa (FSA), zip, import de bundle/link
 │  ├─ preview/       # terminal embutido (engine real)
 │  └─ validation/    # regras de consistência
-└─ .github/workflows # build matrix 3 OS
+└─ .github/workflows # CI (typecheck/test/build) + Pages
 ```
 
 ---
@@ -52,6 +53,7 @@ scenario-forge/
 
 ### 3.1 Scenario (`scenario.json`)
 - `theme` — um dos 8 sistemas: `alien`, `br`, `cprd`, `dataslate`, `fallout`, `ibm`, `lancer`, `wh40k`
+  (gravado no JSON para o import web não depender do path `scenarios/<theme>/<id>`)
 - `id`, `name`, `header`
 - `motd[]` — linhas do banner inicial
 - `dialog` — `{ thinking, fallback, responses[] }`
@@ -62,9 +64,6 @@ scenario-forge/
 - Runtime VFS: `{ "/caminho": { type:"dir", children:[…] } | { type:"file", content:"…" } }`.
 
 ### 3.3 Flags de `.dat` (frontmatter) — formulário dedicado
-> ⚠️ Semântica/defaults exatos devem ser derivados do engine na Fase 1
-> (`src/engine/filesystem.js` + lógica de crack/tracer). Lista observada:
-
 - **Lock**: `locked` (bool), `password` (string), `lockLabel` / `decryptLabel` (string)
 - **Crack**: `crackable` (bool), `crackDC` (number — dificuldade), `crackAttempts` (number),
   `crackSeconds` (number), `crackFailMessage` (string), `crackLines` (string[])
@@ -90,34 +89,26 @@ scenario-forge/
 
 ### v1
 - **Preview ao vivo**: terminal real embutido (crackar, tracer rodando, senha, locked).
-- **Import** de cenário existente (abrir pasta do repo).
+- **Import** de cenário existente (pasta / zip / bundle / link).
 - Templates por sistema/tema; biblioteca de snippets de dialog.
 
 ### Futuro
 - Commit/PR direto pro repositório de jogo privado; múltiplos locales; "modo teste" com rolagem d20 vs DC;
-  auto-update (Tauri updater); validação contra a versão do engine.
+  validação contra a versão do engine.
 
 ---
 
 ## 5. Build & distribuição
-- **GitHub Actions matrix**: `windows` (.msi/.exe), `macos` (.dmg, idealmente universal arm64+x64),
-  `ubuntu` (.AppImage/.deb).
-- **Releases** com binários por OS; Tauri updater opcional.
-- ⚠️ **Assinatura de código** (notarização Mac / signing Windows) é opcional e tem custo;
-  sem ela os SOs avisam "app não verificado". Decisão adiada.
+- **CI**: typecheck + testes + `vite build` (com `BASE_PATH=/scenario-forge/`).
+- **GitHub Pages** no push da `main`.
+- Instaladores desktop (Tauri) foram descontinuados — assinatura/SignPath não se aplica mais.
 
 ---
 
-## 6. ⚠️ Pré-requisito crítico — engine no preview
-O terminal hoje é um **app** (Vite), não uma **lib**. Para o preview usar o engine
-real sem duplicar código (e consistente com a extração já feita do `rpg-prop-kit`):
-
-- **Extrair um pacote `rpgterm-engine`** (filesystem + commands + crack/tracer/wordle)
-  publicado no npm, consumido tanto pelo terminal quanto pelo editor.
-- Isso também elimina o **risco de divergência de schema**: o editor importa o
-  schema/parser do mesmo pacote, garantindo que os flags gerados são exatamente
-  os que o terminal lê. CI valida com round-trip (gerar → carregar no engine → conferir).
-- Alternativas piores: git submodule do terminal (acopla forte) ou vendorizar (deriva).
+## 6. Engine no preview
+O terminal e o editor compartilham [`rpgterm-engine`](https://www.npmjs.com/package/rpgterm-engine).
+CI valida com round-trip (gerar → carregar no engine → conferir). Manter o pin
+no mesmo minor do ITR.
 
 ---
 
@@ -125,18 +116,16 @@ real sem duplicar código (e consistente com a extração já feita do `rpg-prop
 
 | Risco / decisão | Encaminhamento |
 |---|---|
-| Engine não é lib | Extrair `rpgterm-engine` (Fase 0/1) |
 | Schema dos flags pode divergir | Schema único vindo do engine + teste round-trip no CI |
-| Assinatura de código (custo) | Adiar; releases não-assinadas no início |
-| Nome do projeto | Confirmar (`scenario-forge`?) |
-| Toolchain Rust no build | CI cuida; dev local precisa de Rust |
+| Firefox/Safari sem File System Access | Abrir via `webkitdirectory`; salvar via zip |
+| Nome do projeto | Confirmado (`scenario-forge`) |
 
 ---
 
 ## 8. Roadmap em fases
-- **Fase 0** ✅ — Scaffold Tauri+React+TS + CI build nos 3 OS.
+- **Fase 0** ✅ — Scaffold React+TS + CI.
 - **Fase 1** ✅ — Modelo de dados (fiel ao engine) + árvore + editores md/dat + painel de flags + scenario.json + validação + export/import + testes de round-trip.
-- **Fase 2** ✅ — Preview ao vivo (engine embutido via `rpgterm-engine` + postMessage).
-- **Fase 3** ✅ — Templates, import (pasta/bundle/link), diálogo/eventos, release com binários.
-- **Depois** — SignPath Windows depois do cadastro Foundation; Tauri updater;
-  notarização Mac (pago). Manter o pin de `rpgterm-engine` no mesmo minor do ITR.
+- **Fase 2** ✅ — Preview ao vivo (engine embutido via `rpgterm-engine`).
+- **Fase 3** ✅ — Templates, import (pasta/bundle/link), diálogo/eventos.
+- **Web-only** ✅ — sem Tauri; pasta nativa no Chromium; zip em qualquer navegador; Pages.
+- **Depois** — manter o pin de `rpgterm-engine` no mesmo minor do ITR.
