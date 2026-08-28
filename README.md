@@ -12,11 +12,13 @@ versionável **e** o JSON carregável em runtime.
 
 ## Screenshots
 
-![Editor: árvore, scenario.json e flags](docs/screenshots/editor-overview.png)
+Clique para ver em 1080p.
 
-![Painel de flags de um arquivo trancado](docs/screenshots/flag-toggle.png)
+[<img src="docs/screenshots/editor-overview.png" width="720" alt="Editor: árvore, scenario.json e flags">](docs/screenshots/editor-overview.png)
 
-![Preview in-process no CRT](docs/screenshots/live-preview.png)
+[<img src="docs/screenshots/flag-toggle.png" width="720" alt="Painel de flags de um arquivo trancado">](docs/screenshots/flag-toggle.png)
+
+[<img src="docs/screenshots/live-preview.png" width="720" alt="Preview in-process no CRT">](docs/screenshots/live-preview.png)
 
 > **Status:** editor no navegador (sem instalador). Preview **in-process** (mesmo
 > `rpgterm-engine` do editor, casca CRT via `rpg-prop-kit`). O terminal publicado
