@@ -10,6 +10,14 @@ versionável **e** o JSON carregável em runtime.
 
 **Uso:** <https://flippelt.github.io/scenario-forge/>
 
+## Screenshots
+
+![Editor: árvore, scenario.json e flags](docs/screenshots/editor-overview.png)
+
+![Painel de flags de um arquivo trancado](docs/screenshots/flag-toggle.png)
+
+![Preview in-process no CRT](docs/screenshots/live-preview.png)
+
 > **Status:** editor no navegador (sem instalador). Preview **in-process** (mesmo
 > `rpgterm-engine` do editor, casca CRT via `rpg-prop-kit`). O terminal publicado
 > da Pages é só um atalho, com aviso se o pin do engine divergir. Veja
