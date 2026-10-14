@@ -4,6 +4,7 @@ import { useStore } from '../model/store'
 import { useT } from '../i18n'
 import { toRuntimeBundle } from '../model/serialize'
 import { PreviewHost } from './PreviewHost'
+import { gpuSupported, readPreviewGpuPref, writePreviewGpuPref } from './gpu'
 import {
   ENGINE_VERSION,
   compareVersions,
@@ -49,6 +50,8 @@ export function PreviewPanel({ onClose }: { onClose: () => void }) {
   }, [project])
 
   const lang = locale === 'pt' ? 'pt' : 'en'
+  const gpuAvailable = useMemo(gpuSupported, [])
+  const [gpu, setGpu] = useState(readPreviewGpuPref)
 
   return (
     <div className="preview-overlay">
@@ -57,6 +60,25 @@ export function PreviewPanel({ onClose }: { onClose: () => void }) {
         <span className="muted">{t('engine local', 'local engine')}</span>
         <VersionBadge report={report} />
         <span className="spacer" />
+        {gpuAvailable && (
+          <label
+            className="muted"
+            title={t(
+              'Overlay CRT em WebGPU, igual ao terminal com a GPU ligada.',
+              'WebGPU CRT overlay, as the terminal shows it with the GPU on.'
+            )}
+          >
+            <input
+              type="checkbox"
+              checked={gpu}
+              onChange={(e) => {
+                setGpu(e.target.checked)
+                writePreviewGpuPref(e.target.checked)
+              }}
+            />{' '}
+            GPU
+          </label>
+        )}
         <a
           className="ext-link"
           href={extUrl}
@@ -77,7 +99,7 @@ export function PreviewPanel({ onClose }: { onClose: () => void }) {
           {t('Fechar', 'Close')}
         </button>
       </div>
-      <PreviewHost project={project} lang={lang} />
+      <PreviewHost project={project} lang={lang} gpu={gpuAvailable && gpu} />
     </div>
   )
 }

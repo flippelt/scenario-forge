@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import { CRTScreen } from 'rpg-prop-kit'
 import 'rpg-prop-kit/styles.css'
+import { previewGpuOptions } from './gpu'
 import {
   complete,
   makeT,
@@ -69,7 +70,16 @@ function lineClass(type?: string) {
   return 'host-line'
 }
 
-export function PreviewHost({ project, lang }: { project: Project; lang: string }) {
+export function PreviewHost({
+  project,
+  lang,
+  gpu = false
+}: {
+  project: Project
+  lang: string
+  /** Liga o overlay CRT em WebGPU do rpg-prop-kit (se houver WebGPU). */
+  gpu?: boolean
+}) {
   const tUi = useT()
   const theme = useMemo(() => composeProject(project, lang), [project, lang])
   const crt = asCrt(theme)
@@ -212,6 +222,7 @@ export function PreviewHost({ project, lang }: { project: Project; lang: string 
         curvature={crt.curvature}
         sweep
         vignette
+        gpu={gpu ? previewGpuOptions(theme) : false}
         style={{ height: '100%' }}
       >
         <div className="host-inner">
