@@ -59,8 +59,8 @@ export function FileEditor() {
           </div>
         ) : (
           <div className="banner">
-            {t('Arquivo de dados — o painel à direita controla os flags do frontmatter.',
-              'Data file — the panel on the right controls the front-matter flags.')}
+            {t('Arquivo de dados — os flags do frontmatter ficam no menu.',
+              'Data file — the front-matter flags are in the menu.')}
           </div>
         )}
         {showPreview ? (

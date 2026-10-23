@@ -18,8 +18,8 @@ export const TEMPLATES: Template[] = [
     id: 'blank',
     label: { pt: 'Em branco', en: 'Blank' },
     description: {
-      pt: 'Cenário vazio. Escolha o tema no painel do scenario.json e comece do zero.',
-      en: 'Empty scenario. Pick the theme in the scenario.json panel and start from scratch.'
+      pt: 'Cenário vazio. Escolha o tema em ⚙ Geral e comece do zero.',
+      en: 'Empty scenario. Pick the theme in ⚙ General and start from scratch.'
     },
     build: () => emptyProject('ibm')
   },

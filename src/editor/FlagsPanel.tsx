@@ -3,6 +3,7 @@ import { useT } from '../i18n'
 import { FLAG_GROUPS, coerceFlag, type FlagDef } from '../model/flags'
 import { isFlagCapable } from '../model/vfs'
 import type { FileMeta } from '../model/types'
+import { Group } from './Group'
 
 // Flags whose engine default is "true unless explicitly false" — they need a
 // 3-way control (padrão / sim / não) instead of a plain checkbox.
@@ -81,6 +82,8 @@ function Field({ def, path, meta }: { def: FlagDef; path: string; meta: FileMeta
   )
 }
 
+// The menu panel for one file: its flags as closed blocks. Prose files and
+// translations have no flags, so they get a short note instead.
 export function FlagsPanel() {
   const t = useT()
   const selectedPath = useStore((s) => s.selectedPath)
@@ -88,52 +91,40 @@ export function FlagsPanel() {
   const file = useStore((s) => s.project.files.find((f) => f.path === s.selectedPath))
 
   if (!selectedPath || !file) {
-    return (
-      <div className="col flags">
-        <p className="col-title">Flags</p>
-        <p className="muted">{t('Selecione um arquivo de dados para configurar os flags.', 'Select a data file to configure its flags.')}</p>
-      </div>
-    )
+    return <p className="muted">{t('Escolha um arquivo na lista.', 'Pick a file from the list.')}</p>
   }
   if (lang !== 'base') {
     return (
-      <div className="col flags">
-        <p className="col-title">Flags</p>
-        <p className="muted">{t('Os flags vivem no arquivo base. Volte ao idioma “base” para editá-los.', 'Flags live on the base file. Switch back to the “base” language to edit them.')}</p>
-      </div>
+      <p className="muted">
+        {t('Os flags ficam no arquivo base. Volte ao idioma “base” para editá-los.', 'Flags live on the base file. Switch back to the “base” language to edit them.')}
+      </p>
     )
   }
   if (!isFlagCapable(selectedPath)) {
     return (
-      <div className="col flags">
-        <p className="col-title">Flags</p>
-        <p className="muted">
-          {t('Arquivos ', 'Files ')}<code>.md</code>
-          {t(' são tratados como prosa. Para usar flags de bloqueio, use um arquivo de dados (',
-            ' are treated as prose. To use lock flags, use a data file (')}
-          <code>.dat</code>).
-        </p>
-      </div>
+      <p className="muted">
+        {t('Arquivo ', 'A ')}<code>.md</code>
+        {t(' é prosa, sem flags. Para bloquear, use um arquivo de dados (', ' file is prose, without flags. To lock it, use a data file (')}
+        <code>.dat</code>).
+      </p>
     )
   }
 
   const meta = file.meta
   return (
-    <div className="col flags">
-      <p className="col-title">Flags · {selectedPath.split('/').pop()}</p>
+    <>
       {FLAG_GROUPS.map((g) => {
         const visible = g.fields.filter((f) => !f.when || f.when(meta))
         if (visible.length === 0) return null
         return (
-          <details key={g.id} className="flag-group" open={g.id === 'lock'}>
-            <summary>{t(g.label.pt, g.label.en)}</summary>
+          <Group key={g.id} title={t(g.label.pt, g.label.en)} sub={t(g.sub.pt, g.sub.en)}>
             {g.help && <div className="group-help">{t(g.help.pt, g.help.en)}</div>}
             {visible.map((f) => (
               <Field key={f.key} def={f} path={selectedPath} meta={meta} />
             ))}
-          </details>
+          </Group>
         )
       })}
-    </div>
+    </>
   )
 }

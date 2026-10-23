@@ -8,11 +8,13 @@ import { promptText, confirmDialog } from '../ui/dialog'
 function Row({
   node,
   metaByPath,
+  fileView,
   onSelectFile,
   onMove
 }: {
   node: TreeNode
   metaByPath: Map<string, FileNode>
+  fileView: boolean
   onSelectFile: () => void
   onMove: (fromPath: string, toDir: string) => void
 }) {
@@ -43,7 +45,7 @@ function Row({
         {node.children.length > 0 && (
           <ul>
             {node.children.map((c) => (
-              <Row key={c.path} node={c} metaByPath={metaByPath} onSelectFile={onSelectFile} onMove={onMove} />
+              <Row key={c.path} node={c} metaByPath={metaByPath} fileView={fileView} onSelectFile={onSelectFile} onMove={onMove} />
             ))}
           </ul>
         )}
@@ -56,7 +58,7 @@ function Row({
   return (
     <li>
       <div
-        className={`row ${selectedPath === node.path ? 'active' : ''}`}
+        className={`row ${fileView && selectedPath === node.path ? 'active' : ''}`}
         draggable
         title={t('Arraste para mover de pasta', 'Drag to move to another folder')}
         onDragStart={(e) => {
@@ -75,12 +77,16 @@ function Row({
   )
 }
 
+// The top of the side menu: ⚙ Geral (scenario.json) and the file list. It
+// picks what the panel below edits, like the sheet picker in opord.
 export function FileTree({
   locked = false,
+  fileView,
   onShowScenario,
   onSelectFile
 }: {
   locked?: boolean
+  fileView: boolean
   onShowScenario: () => void
   onSelectFile: () => void
 }) {
@@ -90,7 +96,6 @@ export function FileTree({
   const deleteFile = useStore((s) => s.deleteFile)
   const renameFile = useStore((s) => s.renameFile)
   const selectedPath = useStore((s) => s.selectedPath)
-  const scenarioId = useStore((s) => s.project.meta.id)
 
   const tree = buildTree(files)
   const metaByPath = new Map(files.map((f) => [f.path, f]))
@@ -127,17 +132,17 @@ export function FileTree({
   }
 
   return (
-    <div className="col tree">
-      <p className="col-title">{t('Cenário', 'Scenario')} · {scenarioId}</p>
-      <button className="scenario-item" onClick={onShowScenario}>
-        ⚙ scenario.json
+    <div className="navigator">
+      <button className={`scenario-item ${fileView ? '' : 'active'}`} onClick={onShowScenario}>
+        ⚙ {t('Geral', 'General')} <small>scenario.json</small>
       </button>
 
       <div className="tree-actions">
+        <span className="tree-label">{t('Arquivos', 'Files')}</span>
         <button disabled={locked} onClick={() => promptNew(false)}>{t('+ arquivo', '+ file')}</button>
         <button disabled={locked} onClick={() => promptNew(true)}>+ 🔒 .dat</button>
       </div>
-      {selectedPath && (
+      {fileView && selectedPath && (
         <div className="tree-actions">
           <button
             disabled={locked}
@@ -184,7 +189,7 @@ export function FileTree({
           }}
         >
           {tree.children.map((c) => (
-            <Row key={c.path} node={c} metaByPath={metaByPath} onSelectFile={onSelectFile} onMove={move} />
+            <Row key={c.path} node={c} metaByPath={metaByPath} fileView={fileView} onSelectFile={onSelectFile} onMove={move} />
           ))}
         </ul>
       )}

@@ -30,6 +30,8 @@ export interface FlagDef {
 export interface FlagGroup {
   id: string
   label: LocStr
+  /** One short line shown under the title while the block is closed. */
+  sub: LocStr
   help?: LocStr
   fields: FlagDef[]
 }
@@ -42,6 +44,7 @@ export const FLAG_GROUPS: FlagGroup[] = [
   {
     id: 'lock',
     label: { pt: 'Bloqueio', en: 'Lock' },
+    sub: { pt: 'Bloqueado, senha e o que revela', en: 'Locked, password and what it reveals' },
     help: {
       pt: 'Um arquivo bloqueado exige crack, senha ou o minigame de decrypt para ser lido.',
       en: 'A locked file requires a crack, a password or the decrypt minigame to be read.'
@@ -81,6 +84,7 @@ export const FLAG_GROUPS: FlagGroup[] = [
   {
     id: 'crack',
     label: { pt: 'Força bruta (crack)', en: 'Brute force (crack)' },
+    sub: { pt: 'DC, tentativas e mensagens', en: 'DC, attempts and messages' },
     help: {
       pt: '`crack` quebra o arquivo. Pode ser livre, exigir um teste (DC) ou ser impossível.',
       en: '`crack` breaks the file. It can be free, require a check (DC) or be impossible.'
@@ -168,6 +172,7 @@ export const FLAG_GROUPS: FlagGroup[] = [
   {
     id: 'decrypt',
     label: { pt: 'Decrypt (minigame)', en: 'Decrypt (minigame)' },
+    sub: { pt: 'Minigame e palavra-alvo', en: 'Minigame and target word' },
     help: {
       pt: 'Minigame estilo Wordle para descobrir a chave. Liga por padrão em arquivos não-crackáveis.',
       en: 'Wordle-style minigame to find the key. On by default for non-crackable files.'
@@ -222,6 +227,7 @@ export const FLAG_GROUPS: FlagGroup[] = [
   {
     id: 'tracer',
     label: { pt: 'Tracer / vigilância', en: 'Tracer / surveillance' },
+    sub: { pt: 'Vigiado, janela e penalidade', en: 'Watched, window and penalty' },
     help: {
       pt: 'Arquivo "vigiado": uma intrusão arma o rastreador. O `check` revela a posição de segurança.',
       en: 'A "watched" file: an intrusion arms the tracer. `check` reveals the security posture.'
@@ -290,6 +296,7 @@ export const FLAG_GROUPS: FlagGroup[] = [
   {
     id: 'recon',
     label: { pt: 'Recon (check)', en: 'Recon (check)' },
+    sub: { pt: 'DC do check e alerta', en: 'Check DC and alert' },
     help: {
       pt: 'O comando `check` lê a postura de segurança. Com DC, vira um teste; só revela tudo no GM mode.',
       en: 'The `check` command reads the security posture. With a DC it becomes a check; only GM mode reveals all.'
@@ -321,6 +328,7 @@ export const FLAG_GROUPS: FlagGroup[] = [
   {
     id: 'media',
     label: { pt: 'Mídia', en: 'Media' },
+    sub: { pt: 'Imagem acima do texto', en: 'Image above the text' },
     fields: [
       {
         key: 'image',

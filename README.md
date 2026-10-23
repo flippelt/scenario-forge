@@ -14,9 +14,9 @@ versionável **e** o JSON carregável em runtime.
 
 Clique para ver em 1080p.
 
-[<img src="docs/screenshots/editor-overview.png" width="720" alt="Editor: árvore, scenario.json e flags">](docs/screenshots/editor-overview.png)
+[<img src="docs/screenshots/editor-overview.png" width="720" alt="Editor: menu lateral com Geral e o terminal ao vivo">](docs/screenshots/editor-overview.png)
 
-[<img src="docs/screenshots/flag-toggle.png" width="720" alt="Painel de flags de um arquivo trancado">](docs/screenshots/flag-toggle.png)
+[<img src="docs/screenshots/flag-toggle.png" width="720" alt="Flags de um arquivo trancado no menu">](docs/screenshots/flag-toggle.png)
 
 [<img src="docs/screenshots/live-preview.png" width="720" alt="Preview in-process no CRT">](docs/screenshots/live-preview.png)
 
