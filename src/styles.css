@@ -294,45 +294,30 @@ label {
   opacity: 0.35;
   cursor: default;
 }
-details.panel-group {
-  border-top: 1px solid var(--line);
+.desk {
+  --rpk-block-line: var(--line);
+  --rpk-block-accent: var(--accent);
+  --rpk-block-muted: var(--fg-dim);
 }
-details.panel-group:last-child {
-  border-bottom: 1px solid var(--line);
+/* Blocos do menu vêm do EditorBlock do rpg-prop-kit; aqui só o tom do forge. */
+.desk .rpk-block__summary {
+  gap: 0.1rem;
+  padding-left: 1.1rem;
 }
-details.panel-group > summary {
-  cursor: pointer;
-  list-style: none;
-  padding: 0.6rem 0 0.6rem 1.1rem;
-  position: relative;
-}
-details.panel-group > summary::-webkit-details-marker {
-  display: none;
-}
-details.panel-group > summary::before {
-  content: '▸';
-  position: absolute;
+.desk .rpk-block__summary::before {
   left: 0;
-  top: 0.6rem;
-  color: var(--fg-dim);
 }
-details.panel-group[open] > summary::before {
-  content: '▾';
-  color: var(--accent);
-}
-.panel-title {
+.desk .rpk-block__title {
   font-family: var(--mono);
   font-size: 0.88rem;
-  color: var(--accent);
+  font-weight: normal;
+  line-height: 1.22;
 }
-.panel-sub {
-  display: block;
-  margin-top: 0.1rem;
+.desk .rpk-block__sub {
   font-size: 0.74rem;
-  color: var(--fg-dim);
 }
-.panel-body {
-  padding: 0 0 0.8rem 1.1rem;
+.desk .rpk-block__body {
+  padding-left: 1.1rem;
 }
 
 /* ============================== Stage ============================== */
