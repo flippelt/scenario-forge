@@ -3,7 +3,7 @@ import { useT } from '../i18n'
 import { FLAG_GROUPS, coerceFlag, type FlagDef } from '../model/flags'
 import { isFlagCapable } from '../model/vfs'
 import type { FileMeta } from '../model/types'
-import { Group } from './Group'
+import { EditorBlock } from 'rpg-prop-kit'
 
 // Flags whose engine default is "true unless explicitly false" — they need a
 // 3-way control (padrão / sim / não) instead of a plain checkbox.
@@ -117,12 +117,12 @@ export function FlagsPanel() {
         const visible = g.fields.filter((f) => !f.when || f.when(meta))
         if (visible.length === 0) return null
         return (
-          <Group key={g.id} title={t(g.label.pt, g.label.en)} sub={t(g.sub.pt, g.sub.en)}>
+          <EditorBlock key={g.id} title={t(g.label.pt, g.label.en)} sub={t(g.sub.pt, g.sub.en)}>
             {g.help && <div className="group-help">{t(g.help.pt, g.help.en)}</div>}
             {visible.map((f) => (
               <Field key={f.key} def={f} path={selectedPath} meta={meta} />
             ))}
-          </Group>
+          </EditorBlock>
         )
       })}
     </>
