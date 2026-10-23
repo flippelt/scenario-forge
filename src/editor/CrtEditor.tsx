@@ -46,7 +46,7 @@ export function CrtEditor() {
 
   return (
     <div className="crt-editor">
-      <div className="form-row">
+      <div className="form-row" data-edit="shortName">
         <label>shortName</label>
         <input
           type="text"
