@@ -242,51 +242,79 @@ export function Toolbar({
     <div className="toolbar">
       <span className="brand">▒ scenario-forge</span>
 
-      {locked ? (
-        <button className="primary" type="button" onClick={onUnlock}>
-          {t('Editar', 'Edit')}
+      <div className="tb-group" role="group" aria-label={t('Arquivo', 'File')}>
+        <span className="tb-label">{t('Arquivo', 'File')}</span>
+        <button type="button" onClick={() => void handleNew()}>{t('Novo', 'New')}</button>
+        <button type="button" onClick={() => void handleTemplates()}>{t('Templates', 'Templates')}</button>
+        <button type="button" onClick={() => void handleOpen()}>{t('Abrir pasta', 'Open folder')}</button>
+        <button className="primary" type="button" onClick={() => void handleSave()} title="Ctrl/Cmd+S">
+          {saveLabel}
         </button>
-      ) : (
-        <button type="button" onClick={onLock}>
-          {t('Travar', 'Lock')}
+      </div>
+
+      <div className="tb-group" role="group" aria-label={t('Mesa', 'Table')}>
+        <span className="tb-label">{t('Mesa', 'Table')}</span>
+        <button type="button" onClick={() => void handleMesa()} title={mesaHint}>
+          {t('Salvar na mesa', 'Save to table')}
         </button>
-      )}
+        <button
+          type="button"
+          onClick={() => void handlePickMesa()}
+          title={t('Pasta da mesa (rpgterm/src/themes/scenarios)', 'Table folder (rpgterm/src/themes/scenarios)')}
+        >
+          {t('Pasta…', 'Folder…')}
+        </button>
+      </div>
 
-      <button type="button" onClick={() => void handleNew()}>{t('Novo', 'New')}</button>
-      <button type="button" onClick={() => void handleTemplates()}>{t('Templates', 'Templates')}</button>
-      <button type="button" onClick={() => void handleOpen()}>{t('Abrir pasta', 'Open folder')}</button>
-      <button className="primary" type="button" onClick={() => void handleSave()} title="Ctrl/Cmd+S">
-        {saveLabel}
-      </button>
-      <button type="button" onClick={() => void handleMesa()} title={mesaHint}>
-        {t('Salvar na mesa', 'Save to table')}
-      </button>
-      <button
-        type="button"
-        onClick={() => void handlePickMesa()}
-        title={t('Pasta da mesa (rpgterm/src/themes/scenarios)', 'Table folder (rpgterm/src/themes/scenarios)')}
-      >
-        {t('Pasta da mesa…', 'Table folder…')}
-      </button>
-      <button type="button" onClick={undo} disabled={undoStack.length === 0} title="Ctrl/Cmd+Z">
-        {t('Desfazer', 'Undo')}
-      </button>
-      <button type="button" onClick={redo} disabled={redoStack.length === 0} title="Ctrl/Cmd+Shift+Z">
-        {t('Refazer', 'Redo')}
-      </button>
+      <div className="tb-group" role="group" aria-label={t('Editar', 'Edit')}>
+        <span className="tb-label">{t('Edição', 'Editing')}</span>
+        {locked ? (
+          <button className="primary" type="button" onClick={onUnlock}>
+            {t('Editar', 'Edit')}
+          </button>
+        ) : (
+          <button type="button" onClick={onLock}>
+            {t('Travar', 'Lock')}
+          </button>
+        )}
+        <button type="button" onClick={undo} disabled={undoStack.length === 0} title="Ctrl/Cmd+Z">
+          {t('Desfazer', 'Undo')}
+        </button>
+        <button type="button" onClick={redo} disabled={redoStack.length === 0} title="Ctrl/Cmd+Shift+Z">
+          {t('Refazer', 'Redo')}
+        </button>
+      </div>
 
-      <span className="sep" />
+      <div className="tb-group" role="group" aria-label={t('Trocar', 'Share')}>
+        <span className="tb-label">{t('Trocar', 'Share')}</span>
+        <button type="button" onClick={() => exportRuntimeBundle(project)}>{t('Exportar bundle', 'Export bundle')}</button>
+        {native && (
+          <button type="button" onClick={() => exportRepoZip(project)}>{t('Baixar .zip', 'Download .zip')}</button>
+        )}
+        <button type="button" onClick={() => fileInput.current?.click()}>{t('Importar', 'Import')}</button>
+        <button type="button" onClick={() => void handleImportLink()}>{t('Importar link', 'Import link')}</button>
+      </div>
 
-      <button type="button" onClick={() => exportRuntimeBundle(project)}>{t('Exportar bundle', 'Export bundle')}</button>
-      {native && (
-        <button type="button" onClick={() => exportRepoZip(project)}>{t('Baixar pasta (.zip)', 'Download folder (.zip)')}</button>
-      )}
-      <button type="button" onClick={() => fileInput.current?.click()}>{t('Importar', 'Import')}</button>
-      <button type="button" onClick={() => void handleImportLink()}>{t('Importar link', 'Import link')}</button>
-
-      <span className="sep" />
-
-      <button className="primary" type="button" onClick={onPreview}>▶ {t('Preview', 'Preview')}</button>
+      <div className="tb-group" role="group" aria-label={t('Ver', 'View')}>
+        <span className="tb-label">{t('Ver', 'View')}</span>
+        <button className="primary" type="button" onClick={onPreview}>▶ {t('Preview', 'Preview')}</button>
+        <label htmlFor="lang" className="muted">{t('Idioma:', 'Language:')}</label>
+        <select
+          id="lang"
+          value={lang}
+          style={{ width: 'auto' }}
+          onChange={(e) => {
+            if (e.target.value === '__add') void handleAddLang()
+            else setLang(e.target.value)
+          }}
+        >
+          <option value="base">base</option>
+          {langs.map((l) => (
+            <option key={l} value={l}>{l}</option>
+          ))}
+          <option value="__add">{t('+ idioma…', '+ language…')}</option>
+        </select>
+      </div>
       <input
         ref={fileInput}
         type="file"
@@ -311,25 +339,6 @@ export function Toolbar({
           e.target.value = ''
         }}
       />
-
-      <span className="sep" />
-
-      <label htmlFor="lang" className="muted">{t('Idioma do cenário:', 'Scenario language:')}</label>
-      <select
-        id="lang"
-        value={lang}
-        style={{ width: 'auto' }}
-        onChange={(e) => {
-          if (e.target.value === '__add') void handleAddLang()
-          else setLang(e.target.value)
-        }}
-      >
-        <option value="base">base</option>
-        {langs.map((l) => (
-          <option key={l} value={l}>{l}</option>
-        ))}
-        <option value="__add">{t('+ idioma…', '+ language…')}</option>
-      </select>
 
       <span className="spacer" />
       <VersionBadge report={engineReport} />

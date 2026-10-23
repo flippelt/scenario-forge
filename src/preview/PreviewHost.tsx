@@ -73,12 +73,15 @@ function lineClass(type?: string) {
 export function PreviewHost({
   project,
   lang,
-  gpu = false
+  gpu = false,
+  autoFocus = true
 }: {
   project: Project
   lang: string
   /** Liga o overlay CRT em WebGPU do rpg-prop-kit (se houver WebGPU). */
   gpu?: boolean
+  /** Desligado ao lado do menu, para não roubar o foco dos campos. */
+  autoFocus?: boolean
 }) {
   const tUi = useT()
   const theme = useMemo(() => composeProject(project, lang), [project, lang])
@@ -129,7 +132,7 @@ export function PreviewHost({
   }, [boot])
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: 'end' })
+    bottomRef.current?.scrollIntoView?.({ block: 'nearest' })
   }, [lines, prompt])
 
   const run = useCallback(
@@ -261,7 +264,7 @@ export function PreviewHost({
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={onKeyDown}
                 spellCheck={false}
-                autoFocus
+                autoFocus={autoFocus}
                 aria-label="command"
               />
             </div>

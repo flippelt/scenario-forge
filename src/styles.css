@@ -107,11 +107,19 @@ label {
   letter-spacing: 0.04em;
   margin-right: 0.5rem;
 }
-.toolbar .sep {
-  width: 1px;
-  align-self: stretch;
-  background: var(--line);
-  margin: 0 0.25rem;
+.tb-group {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding-right: 0.6rem;
+  border-right: 1px solid var(--line);
+}
+.tb-label {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
 }
 .toolbar .spacer {
   flex: 1;
@@ -130,36 +138,233 @@ label {
 }
 
 .main {
+  position: relative;
   display: grid;
-  grid-template-columns: 250px 1fr 320px;
+  grid-template-columns: var(--desk-w, 460px) minmax(0, 1fr);
   min-height: 0;
+}
+.main.is-collapsed {
+  grid-template-columns: minmax(0, 1fr);
 }
 .col {
   min-height: 0;
   overflow: auto;
   padding: 0.75rem;
 }
-.col.tree {
+
+/* ============================== Menu ============================== */
+
+.desk {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.9rem 1rem 0;
   border-right: 1px solid var(--line);
   background: var(--bg-panel);
 }
-.col.flags {
-  border-left: 1px solid var(--line);
+.desk-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--desk-w, 460px) - 4px);
+  width: 8px;
+  cursor: col-resize;
+  z-index: 6;
+  touch-action: none;
+}
+.desk-resizer:hover,
+.desk-resizer:focus-visible {
+  outline: none;
+  background: linear-gradient(90deg, transparent 3px, var(--accent) 3px, var(--accent) 5px, transparent 5px);
+}
+.desk-brand {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--line);
+}
+.desk-brand h1 {
+  margin: 0.15rem 0 0;
+  font-family: var(--mono);
+  font-size: 1.35rem;
+  color: var(--accent);
+  word-break: break-all;
+}
+.desk-kicker {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.desk-collapse {
+  flex: none;
+  font-size: 0.78rem;
+  padding: 0.2rem 0.5rem;
+}
+.desk-step {
+  margin: 0.9rem 0 0.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line);
+}
+.desk-step h2 {
+  margin: 0.15rem 0 0.3rem;
+  font-family: var(--mono);
+  font-size: 1rem;
+  word-break: break-all;
+}
+.field-hint {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--fg-dim);
+}
+.desk-panel {
+  flex: 1;
+  padding-bottom: 0.5rem;
+}
+.desk-panel > .muted {
+  font-size: 0.82rem;
+}
+.desk-nav {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0.5rem -1rem 0;
+  padding: 0.6rem 1rem 0.8rem;
+  border-top: 1px solid var(--line);
   background: var(--bg-panel);
 }
-.col-title {
-  font-family: var(--mono);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.72rem;
+.desk-nav button {
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-nav button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+details.panel-group {
+  border-top: 1px solid var(--line);
+}
+details.panel-group:last-child {
+  border-bottom: 1px solid var(--line);
+}
+details.panel-group > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.6rem 0 0.6rem 1.1rem;
+  position: relative;
+}
+details.panel-group > summary::-webkit-details-marker {
+  display: none;
+}
+details.panel-group > summary::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  top: 0.6rem;
   color: var(--fg-dim);
-  margin: 0 0 0.6rem;
+}
+details.panel-group[open] > summary::before {
+  content: '▾';
+  color: var(--accent);
+}
+.panel-title {
+  font-family: var(--mono);
+  font-size: 0.88rem;
+  color: var(--accent);
+}
+.panel-sub {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.74rem;
+  color: var(--fg-dim);
+}
+.panel-body {
+  padding: 0 0 0.8rem 1.1rem;
+}
+
+/* ============================== Stage ============================== */
+
+.stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.stage > .col {
+  flex: 1;
+}
+.desk-expand {
+  align-self: flex-start;
+  margin: 0.5rem 0.75rem 0;
+}
+.stage-preview {
+  flex: 1;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 0;
+  background: var(--bg);
+}
+.stage-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.8rem;
+}
+.stage-bar .spacer {
+  flex: 1;
+}
+.stage-preview .muted {
+  color: var(--fg-dim);
+}
+
+@media (max-width: 760px) {
+  html,
+  body,
+  #root,
+  .app {
+    height: auto;
+    min-height: 100dvh;
+  }
+  .main,
+  .main.is-collapsed {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(70dvh, auto);
+  }
+  .desk {
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .stage {
+    min-height: 70dvh;
+  }
+  .desk-nav {
+    position: static;
+  }
+  .desk-resizer {
+    display: none;
+  }
 }
 
 /* ============================== Tree ============================== */
 
 .tree-actions {
   display: flex;
+  align-items: center;
   gap: 0.35rem;
   margin-bottom: 0.6rem;
 }
@@ -173,6 +378,18 @@ label {
   text-align: left;
   margin-bottom: 0.5rem;
   font-family: var(--mono);
+}
+.tree-label {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.scenario-item small {
+  color: var(--fg-dim);
+  margin-left: 0.3rem;
 }
 .scenario-item.active {
   border-color: var(--accent);
@@ -287,27 +504,13 @@ ul.tree > li > .row {
 
 /* ============================== Flags ============================== */
 
-.flag-group {
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  margin-bottom: 0.7rem;
-  overflow: hidden;
-}
-.flag-group > summary {
-  cursor: pointer;
-  padding: 0.45rem 0.6rem;
-  background: var(--bg-soft);
-  font-family: var(--mono);
-  font-size: 0.82rem;
-  color: var(--accent);
-}
-.flag-group .group-help {
+.group-help {
   font-size: 0.76rem;
   color: var(--fg-dim);
-  padding: 0.4rem 0.6rem 0;
+  padding: 0 0 0.3rem;
 }
 .flag-field {
-  padding: 0.45rem 0.6rem;
+  padding: 0.45rem 0;
 }
 .flag-field .head {
   display: flex;
@@ -354,36 +557,6 @@ ul.tree > li > .row {
   font-size: 0.76rem;
   font-family: var(--mono);
   margin-top: 0.3rem;
-}
-details.advanced > summary,
-details.step-block > summary {
-  cursor: pointer;
-  color: var(--accent);
-  font-family: var(--mono);
-  margin: 0.5rem 0;
-  list-style: none;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-details.step-block > summary::-webkit-details-marker {
-  display: none;
-}
-.step-n {
-  width: 1.35rem;
-  height: 1.35rem;
-  border-radius: 50%;
-  border: 1px solid var(--line);
-  display: inline-grid;
-  place-items: center;
-  font-size: 0.72rem;
-  color: var(--accent);
-  flex-shrink: 0;
-}
-.step-sep {
-  border: 0;
-  border-top: 1px solid var(--line);
-  margin: 0.85rem 0;
 }
 .inner-sep {
   border: 0;

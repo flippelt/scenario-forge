@@ -6,6 +6,7 @@ import { DialogEditor } from './DialogEditor'
 import { EventsEditor } from './EventsEditor'
 import { TracerEditor } from './TracerEditor'
 import { CrtEditor } from './CrtEditor'
+import { Group } from './Group'
 
 // Friendly fields get forms; everything else round-trips through an advanced
 // JSON editor so nothing in scenario.json is ever lost. `dialog` has its own
@@ -72,11 +73,8 @@ export function ScenarioPanel() {
   const motdText = (meta.motd ?? []).join('\n')
 
   return (
-    <div className="col">
-      <p className="col-title">scenario.json</p>
-
-      <details className="step-block" open>
-        <summary><span className="step-n">1</span> {t('Identidade', 'Identity')}</summary>
+    <>
+      <Group title={t('Identidade', 'Identity')} sub={t('Sistema, id e nome', 'System, id and name')}>
         <div className="form-row">
           <label>{t('Sistema (tema)', 'System (theme)')}</label>
           <select value={theme} onChange={(e) => setTheme(e.target.value as typeof theme)}>
@@ -97,12 +95,9 @@ export function ScenarioPanel() {
           <label>name</label>
           <input type="text" value={meta.name ?? ''} onChange={(e) => setMeta({ name: e.target.value })} />
         </div>
-      </details>
+      </Group>
 
-      <hr className="step-sep" />
-
-      <details className="step-block" open>
-        <summary><span className="step-n">2</span> {t('Terminal', 'Terminal')}</summary>
+      <Group title={t('Terminal', 'Terminal')} sub={t('Cabeçalho, prompt, usuário e boas-vindas', 'Header, prompt, user and welcome')}>
         <div className="form-row">
           <label>header</label>
           <input type="text" value={meta.header ?? ''} onChange={(e) => setMeta({ header: e.target.value })} />
@@ -139,12 +134,9 @@ export function ScenarioPanel() {
           </label>
           <div className="help">{t('Um `check` falho dá uma leitura ENGANOSA da vigilância, em vez de “inconclusivo”.', 'A failed `check` gives a MISLEADING surveillance reading instead of “inconclusive”.')}</div>
         </div>
-      </details>
+      </Group>
 
-      <hr className="step-sep" />
-
-      <details className="step-block">
-        <summary><span className="step-n">3</span> {t('Tubo CRT (shortName + knobs)', 'CRT tube (shortName + knobs)')}</summary>
+      <Group title={t('Tubo CRT', 'CRT tube')} sub={t('Nome curto e ajustes da tela', 'Short name and screen knobs')}>
         <p className="help">
           {t(
             'Perfil visual do engine 0.2.1. Vazio herda o tema. O preview in-process lê estes valores.',
@@ -152,47 +144,35 @@ export function ScenarioPanel() {
           )}
         </p>
         <CrtEditor />
-      </details>
+      </Group>
 
-      <hr className="step-sep" />
-
-      <details className="step-block">
-        <summary><span className="step-n">4</span> {t('Diálogo (query / ask)', 'Dialog (query / ask)')}</summary>
+      <Group title={t('Diálogo', 'Dialog')} sub={t('Respostas de query / ask', 'query / ask answers')}>
         <p className="help">
           {t('Respostas do banco de dados conversacional — o que ', 'Conversational database answers — what ')}
           <code>query &lt;{t('assunto', 'subject')}&gt;</code> / <code>ask</code>
           {t(' respondem (ex.: a MU/TH/UR no tema alien).', ' reply (e.g. MU/TH/UR in the alien theme).')}
         </p>
         <DialogEditor />
-      </details>
+      </Group>
 
-      <hr className="step-sep" />
-
-      <details className="step-block">
-        <summary><span className="step-n">5</span> {t('Eventos (ao desbloquear um arquivo)', 'Events (on unlocking a file)')}</summary>
+      <Group title={t('Eventos', 'Events')} sub={t('Falas ao desbloquear um arquivo', 'Lines when a file unlocks')}>
         <p className="help">
           {t('Linhas que tocam logo após um arquivo ser desbloqueado — alarme, recado do vilão, uma contagem regressiva (',
             'Lines that play right after a file is unlocked — alarm, villain’s message, a countdown (')}
           <code>countdown</code>).
         </p>
         <EventsEditor />
-      </details>
+      </Group>
 
-      <hr className="step-sep" />
-
-      <details className="step-block">
-        <summary><span className="step-n">6</span> {t('Tracer / rastreador', 'Tracer')}</summary>
+      <Group title={t('Tracer', 'Tracer')} sub={t('Cronômetro de vigilância', 'Surveillance timer')}>
         <p className="help">
           {t('O cronômetro de ICE/recon que um arquivo vigiado (', 'The ICE/recon timer a watched file (')}
           <code>tracer: true</code>{t(') arma.', ') arms.')}
         </p>
         <TracerEditor />
-      </details>
+      </Group>
 
-      <hr className="step-sep" />
-
-      <details className="step-block">
-        <summary><span className="step-n">7</span> {t('Avançado (commands, aliases, locks, boot, selfDestruct, i18n…)', 'Advanced (commands, aliases, locks, boot, selfDestruct, i18n…)')}</summary>
+      <Group title={t('Avançado', 'Advanced')} sub={t('commands, aliases, boot, i18n… em JSON', 'commands, aliases, boot, i18n… as JSON')}>
         <p className="help">
           {t('Edição direta do restante do scenario.json. Tudo aqui é preservado no round-trip.',
             'Direct edit of the rest of scenario.json. Everything here round-trips intact.')}
@@ -205,7 +185,7 @@ export function ScenarioPanel() {
           onChange={(e) => applyAdvanced(e.target.value)}
         />
         {advErr && <div className="json-error">⚠ {advErr}</div>}
-      </details>
-    </div>
+      </Group>
+    </>
   )
 }
