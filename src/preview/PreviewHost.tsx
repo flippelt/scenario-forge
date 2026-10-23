@@ -27,6 +27,8 @@ type Line = {
   message?: string
   hint?: string
   instant?: boolean
+  /** Menu field this line comes from (motd), for the click-to-edit link. */
+  edit?: string
 }
 
 type Prompt =
@@ -74,7 +76,9 @@ export function PreviewHost({
   project,
   lang,
   gpu = false,
-  autoFocus = true
+  autoFocus = true,
+  lit = '',
+  onPick
 }: {
   project: Project
   lang: string
@@ -82,6 +86,10 @@ export function PreviewHost({
   gpu?: boolean
   /** Desligado ao lado do menu, para não roubar o foco dos campos. */
   autoFocus?: boolean
+  /** data-edit key of the focused menu field; that part of the screen lights up. */
+  lit?: string
+  /** Click on a part with data-edit: jump to its field in the menu. */
+  onPick?: (key: string) => void
 }) {
   const tUi = useT()
   const theme = useMemo(() => composeProject(project, lang), [project, lang])
@@ -122,7 +130,7 @@ export function PreviewHost({
     setHint(null)
     const bootLines = Array.isArray(theme.boot) ? (theme.boot as Line[]) : []
     const motd = Array.isArray(theme.motd)
-      ? (theme.motd as string[]).map((text) => ({ text }))
+      ? (theme.motd as string[]).map((text) => ({ text, edit: 'motd' }))
       : []
     setLines([...bootLines, ...motd, { text: '', instant: true }])
   }, [theme])
@@ -214,6 +222,7 @@ export function PreviewHost({
     }
   }
 
+  const editClass = (base: string, key: string) => (lit === key ? `${base} is-lit` : base)
   const shortName = typeof theme.shortName === 'string' ? theme.shortName : ''
   const header = typeof theme.header === 'string' ? theme.header : ''
 
@@ -228,16 +237,24 @@ export function PreviewHost({
         gpu={gpu ? previewGpuOptions(theme) : false}
         style={{ height: '100%' }}
       >
-        <div className="host-inner">
+        <div
+          className={`host-inner${onPick ? ' is-pickable' : ''}`}
+          onClickCapture={(e) => {
+            const key = (e.target as HTMLElement).closest<HTMLElement>('[data-edit]')?.dataset.edit
+            if (!onPick || !key) return
+            e.stopPropagation()
+            onPick(key)
+          }}
+        >
           {(header || shortName) && (
             <div className="host-plate">
-              {shortName && <span className="host-short">{shortName}</span>}
-              {header && <span className="host-header">{header}</span>}
+              {shortName && <span className={editClass('host-short', 'shortName')} data-edit="shortName">{shortName}</span>}
+              {header && <span className={editClass('host-header', 'header')} data-edit="header">{header}</span>}
             </div>
           )}
           <div className="host-scroll" onClick={() => inputRef.current?.focus()}>
             {lines.map((l, i) => (
-              <div key={i} className={lineClass(l.type)}>
+              <div key={i} className={l.edit ? editClass(lineClass(l.type), l.edit) : lineClass(l.type)} data-edit={l.edit}>
                 {l.text ?? ''}
               </div>
             ))}
@@ -254,7 +271,7 @@ export function PreviewHost({
               />
             )}
             <div className="host-prompt">
-              <span className="host-line--muted">
+              <span className={editClass('host-line--muted', 'prompt')} data-edit="prompt">
                 {(theme.prompt as string) ?? '$'} {cwd} &gt;
               </span>
               <input

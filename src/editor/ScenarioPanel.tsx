@@ -98,12 +98,12 @@ export function ScenarioPanel() {
       </Group>
 
       <Group title={t('Terminal', 'Terminal')} sub={t('Cabeçalho, prompt, usuário e boas-vindas', 'Header, prompt, user and welcome')}>
-        <div className="form-row">
+        <div className="form-row" data-edit="header">
           <label>header</label>
           <input type="text" value={meta.header ?? ''} onChange={(e) => setMeta({ header: e.target.value })} />
           <div className="help">{t('Cabeçalho da barra do terminal (opcional; herda do tema).', 'Terminal title-bar header (optional; inherits from theme).')}</div>
         </div>
-        <div className="form-row">
+        <div className="form-row" data-edit="prompt">
           <label>prompt</label>
           <input type="text" value={meta.prompt ?? ''} onChange={(e) => setMeta({ prompt: e.target.value })} />
         </div>
@@ -112,7 +112,7 @@ export function ScenarioPanel() {
           <input type="text" value={meta.user ?? ''} onChange={(e) => setMeta({ user: e.target.value })} />
         </div>
         <hr className="inner-sep" />
-        <div className="form-row">
+        <div className="form-row" data-edit="motd">
           <label>{t('motd (uma linha por entrada)', 'motd (one line per entry)')}</label>
           <textarea
             rows={5}

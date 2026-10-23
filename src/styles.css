@@ -114,6 +114,48 @@ label {
   padding-right: 0.6rem;
   border-right: 1px solid var(--line);
 }
+.tb-menu {
+  position: relative;
+}
+.tb-menu > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+.tb-menu > summary::-webkit-details-marker {
+  display: none;
+}
+.tb-menu[open] > summary {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.tb-menu__list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 13rem;
+  padding: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-panel);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+.tb-menu__list button {
+  text-align: left;
+}
+.tb-menu__list .tb-label {
+  margin: 0.35rem 0 0.1rem 0.2rem;
+}
+.tb-menu__list .tb-label:first-child {
+  margin-top: 0;
+}
 .tb-label {
   font-family: var(--mono);
   font-size: 0.66rem;
@@ -900,6 +942,15 @@ ul.tree > li > .row {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.host-inner.is-pickable [data-edit] {
+  cursor: pointer;
+}
+.host-inner.is-pickable [data-edit]:hover,
+.host [data-edit].is-lit {
+  outline: 1px dashed var(--rpk-accent, var(--accent));
+  outline-offset: 2px;
+  background: color-mix(in srgb, var(--rpk-accent, #39ff89) 12%, transparent);
 }
 .host-scroll {
   flex: 1;

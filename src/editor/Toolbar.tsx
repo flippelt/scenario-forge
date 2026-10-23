@@ -19,6 +19,33 @@ import { VersionBadge } from '../preview/PreviewPanel'
 import { ENGINE_VERSION, compareVersions, fetchPublishedEngineVersion } from '../preview/engineVersion'
 import { promptText, confirmDialog, alertDialog } from '../ui/dialog'
 
+// The less used file actions (new, open, table, import/export) live in one
+// dropdown so the bar fits on a single line. Closes on pick and on outside click.
+function FileMenu({ label, children }: { label: string; children: React.ReactNode }) {
+  const ref = useRef<HTMLDetailsElement>(null)
+  useEffect(() => {
+    const onDown = (e: PointerEvent) => {
+      const el = ref.current
+      if (el?.open && !el.contains(e.target as Node)) el.open = false
+    }
+    document.addEventListener('pointerdown', onDown)
+    return () => document.removeEventListener('pointerdown', onDown)
+  }, [])
+  return (
+    <details className="tb-menu" ref={ref}>
+      <summary>{label} ▾</summary>
+      <div
+        className="tb-menu__list"
+        onClick={(e) => {
+          if ((e.target as HTMLElement).closest('button') && ref.current) ref.current.open = false
+        }}
+      >
+        {children}
+      </div>
+    </details>
+  )
+}
+
 export function Toolbar({
   locked,
   onUnlock,
@@ -243,31 +270,36 @@ export function Toolbar({
       <span className="brand">▒ scenario-forge</span>
 
       <div className="tb-group" role="group" aria-label={t('Arquivo', 'File')}>
-        <span className="tb-label">{t('Arquivo', 'File')}</span>
-        <button type="button" onClick={() => void handleNew()}>{t('Novo', 'New')}</button>
-        <button type="button" onClick={() => void handleTemplates()}>{t('Templates', 'Templates')}</button>
-        <button type="button" onClick={() => void handleOpen()}>{t('Abrir pasta', 'Open folder')}</button>
+        <FileMenu label={t('Arquivo', 'File')}>
+          <span className="tb-label">{t('Cenário', 'Scenario')}</span>
+          <button type="button" onClick={() => void handleNew()}>{t('Novo', 'New')}</button>
+          <button type="button" onClick={() => void handleTemplates()}>{t('Templates', 'Templates')}</button>
+          <button type="button" onClick={() => void handleOpen()}>{t('Abrir pasta', 'Open folder')}</button>
+          <span className="tb-label">{t('Mesa', 'Table')}</span>
+          <button type="button" onClick={() => void handleMesa()} title={mesaHint}>
+            {t('Salvar na mesa', 'Save to table')}
+          </button>
+          <button
+            type="button"
+            onClick={() => void handlePickMesa()}
+            title={t('Pasta da mesa (rpgterm/src/themes/scenarios)', 'Table folder (rpgterm/src/themes/scenarios)')}
+          >
+            {t('Pasta da mesa…', 'Table folder…')}
+          </button>
+          <span className="tb-label">{t('Trocar', 'Share')}</span>
+          <button type="button" onClick={() => exportRuntimeBundle(project)}>{t('Exportar bundle', 'Export bundle')}</button>
+          {native && (
+            <button type="button" onClick={() => exportRepoZip(project)}>{t('Baixar .zip', 'Download .zip')}</button>
+          )}
+          <button type="button" onClick={() => fileInput.current?.click()}>{t('Importar', 'Import')}</button>
+          <button type="button" onClick={() => void handleImportLink()}>{t('Importar link', 'Import link')}</button>
+        </FileMenu>
         <button className="primary" type="button" onClick={() => void handleSave()} title="Ctrl/Cmd+S">
           {saveLabel}
         </button>
       </div>
 
-      <div className="tb-group" role="group" aria-label={t('Mesa', 'Table')}>
-        <span className="tb-label">{t('Mesa', 'Table')}</span>
-        <button type="button" onClick={() => void handleMesa()} title={mesaHint}>
-          {t('Salvar na mesa', 'Save to table')}
-        </button>
-        <button
-          type="button"
-          onClick={() => void handlePickMesa()}
-          title={t('Pasta da mesa (rpgterm/src/themes/scenarios)', 'Table folder (rpgterm/src/themes/scenarios)')}
-        >
-          {t('Pasta…', 'Folder…')}
-        </button>
-      </div>
-
       <div className="tb-group" role="group" aria-label={t('Editar', 'Edit')}>
-        <span className="tb-label">{t('Edição', 'Editing')}</span>
         {locked ? (
           <button className="primary" type="button" onClick={onUnlock}>
             {t('Editar', 'Edit')}
@@ -285,18 +317,7 @@ export function Toolbar({
         </button>
       </div>
 
-      <div className="tb-group" role="group" aria-label={t('Trocar', 'Share')}>
-        <span className="tb-label">{t('Trocar', 'Share')}</span>
-        <button type="button" onClick={() => exportRuntimeBundle(project)}>{t('Exportar bundle', 'Export bundle')}</button>
-        {native && (
-          <button type="button" onClick={() => exportRepoZip(project)}>{t('Baixar .zip', 'Download .zip')}</button>
-        )}
-        <button type="button" onClick={() => fileInput.current?.click()}>{t('Importar', 'Import')}</button>
-        <button type="button" onClick={() => void handleImportLink()}>{t('Importar link', 'Import link')}</button>
-      </div>
-
       <div className="tb-group" role="group" aria-label={t('Ver', 'View')}>
-        <span className="tb-label">{t('Ver', 'View')}</span>
         <button className="primary" type="button" onClick={onPreview}>▶ {t('Preview', 'Preview')}</button>
         <label htmlFor="lang" className="muted">{t('Idioma:', 'Language:')}</label>
         <select

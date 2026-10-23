@@ -5,6 +5,7 @@ import { buildTree, type TreeNode } from '../model/vfs'
 import { FileTree } from './FileTree'
 import { FlagsPanel } from './FlagsPanel'
 import { ScenarioPanel } from './ScenarioPanel'
+import { useEditFocus } from './editFocus'
 
 const GERAL = '⚙'
 
@@ -38,6 +39,7 @@ export function Desk({
   const select = useStore((s) => s.select)
   const scenarioId = useStore((s) => s.project.meta.id)
   const desk = useRef<HTMLElement>(null)
+  const setFocusKey = useEditFocus((s) => s.setKey)
 
   const steps = useMemo(() => [GERAL, ...filesInTreeOrder(buildTree(files))], [files])
   const current = fileView && selectedPath ? selectedPath : GERAL
@@ -59,7 +61,15 @@ export function Desk({
   }
 
   return (
-    <aside ref={desk} className="desk">
+    <aside
+      ref={desk}
+      className="desk"
+      onFocus={(e) => setFocusKey((e.target as HTMLElement).closest<HTMLElement>('[data-edit]')?.dataset.edit ?? '')}
+      onBlur={(e) => {
+        const into = e.relatedTarget as HTMLElement | null
+        if (!into?.closest('.desk [data-edit]')) setFocusKey('')
+      }}
+    >
       <header className="desk-brand">
         <div>
           <p className="desk-kicker">{t('Cenário', 'Scenario')}</p>
@@ -79,7 +89,7 @@ export function Desk({
         <h2>{current === GERAL ? t('Geral', 'General') : current}</h2>
         <p className="field-hint">
           {current === GERAL
-            ? t('O que vale para o cenário inteiro. A tela ao lado mostra o terminal.', 'What applies to the whole scenario. The screen beside shows the terminal.')
+            ? t('O que vale para o cenário inteiro. Clique na tela ao lado para ir ao campo.', 'What applies to the whole scenario. Click the screen beside to jump to the field.')
             : t('Só os flags deste arquivo. O texto fica ao lado.', 'Only this file’s flags. The text is beside.')}
         </p>
       </div>
